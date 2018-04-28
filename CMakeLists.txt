@@ -11,8 +11,13 @@ cmake_minimum_required(VERSION 3.2.2)
 project(CodeQuery)
 
 
-option(BUILD_QT5 OFF)
+option(BUILD_QT5 ON)
 option(NO_GUI    OFF)
+
+SET( SQLITE_INCLUDE_DIR "c:\\Projects\\SqLite\\src")
+SET( SQLITE_LIBRARIES "c:\\Projects\\SqLite" )
+SET( BUILD_QT5 TRUE ) 
+SET( MSVC FALSE )
 
 if (NO_GUI)
 else (NO_GUI)
@@ -86,5 +91,7 @@ set( CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://ruben2020.github.io/codequery/")
 
 include(CPack)
 
-endif(UNIX)
+else (UNIX)
+set( CPACK_PACKAGE_NAME "codequery-qt5" )
+endif (UNIX)
 

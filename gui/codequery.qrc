@@ -17,15 +17,15 @@
     <file>images/Text_Minus.png</file>
     <file>images/Text_Plus.png</file>
     <file>images/logo.png</file>
-    <file>../build/gui/codequery_de.qm</file>
-    <file>../build/gui/codequery_en.qm</file>
-    <file>../build/gui/codequery_es.qm</file>
-    <file>../build/gui/codequery_fr.qm</file>
-    <file>../build/gui/codequery_id.qm</file>
-    <file>../build/gui/codequery_it.qm</file>
-    <file>../build/gui/codequery_ja.qm</file>
-    <file>../build/gui/codequery_ko.qm</file>
-    <file>../build/gui/codequery_zh-CHS.qm</file>
-    <file>../build/gui/codequery_zh-CHT.qm</file>
+    <file>../../build-codequery-Desktop_Qt_5_7_1_MinGW_32bit-Default/gui/codequery_de.qm</file>
+    <file>../../build-codequery-Desktop_Qt_5_7_1_MinGW_32bit-Default/gui/codequery_en.qm</file>
+    <file>../../build-codequery-Desktop_Qt_5_7_1_MinGW_32bit-Default/gui/codequery_es.qm</file>
+    <file>../../build-codequery-Desktop_Qt_5_7_1_MinGW_32bit-Default/gui/codequery_fr.qm</file>
+    <file>../../build-codequery-Desktop_Qt_5_7_1_MinGW_32bit-Default/gui/codequery_id.qm</file>
+    <file>../../build-codequery-Desktop_Qt_5_7_1_MinGW_32bit-Default/gui/codequery_it.qm</file>
+    <file>../../build-codequery-Desktop_Qt_5_7_1_MinGW_32bit-Default/gui/codequery_ja.qm</file>
+    <file>../../build-codequery-Desktop_Qt_5_7_1_MinGW_32bit-Default/gui/codequery_ko.qm</file>
+    <file>../../build-codequery-Desktop_Qt_5_7_1_MinGW_32bit-Default/gui/codequery_zh-CHS.qm</file>
+    <file>../../build-codequery-Desktop_Qt_5_7_1_MinGW_32bit-Default/gui/codequery_zh-CHT.qm</file>
   </qresource>
 </RCC>

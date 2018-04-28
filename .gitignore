@@ -24,11 +24,20 @@ output/
 Output/
 bin/
 html/
+CMakeFiles/
 
 # Ignore cscope and ctags files, and our db files
 cscope.files
 cscope.out
 tags
 *.db
+
+# vim
+*.swp
+
+# CMake, qt creator
+*.pro.user
+*.txt.user
+
 
 

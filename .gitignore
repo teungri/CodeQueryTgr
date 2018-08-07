@@ -26,6 +26,7 @@ Output/
 bin/
 html/
 CMakeFiles/
+nbproject/
 
 # Ignore cscope and ctags files, and our db files
 cscope.files

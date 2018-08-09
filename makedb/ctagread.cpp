@@ -12,6 +12,8 @@
 
 #include "ctagread.h"
 #include "small_lib.h"
+#include <iostream>
+#include <fstream>
 
 ctagread::ctagread()
 :f_tags(NULL)
@@ -23,6 +25,7 @@ ctagread::ctagread()
 ,m_setsymname_stmt(NULL)
 ,m_setsymtype_stmt(NULL)
 ,m_readfile_stmt(NULL)
+,m_readmaxfileid_stmt(NULL)
 {
 }
 
@@ -61,8 +64,13 @@ void ctagread::close_files(void)
 	sqlite3_reset(m_readsymf_stmt);
 	sqlite3_reset(m_setsymname_stmt);
 	sqlite3_reset(m_setsymtype_stmt);
-	sqlite3_reset(m_setsymtype_stmt);
 	sqlite3_reset(m_readfile_stmt);
+	sqlite3_reset(m_readmaxfileid_stmt);
+	sqlite3_reset(m_insertfile_stmt);
+	sqlite3_reset(m_readmaxlineid_stmt);
+	sqlite3_reset(m_insertline_stmt);
+	sqlite3_reset(m_insertsymbol_stmt);
+	sqlite3_reset(m_readmaxsymbolid_stmt);
 	
 	sqlite3_finalize(m_insertmember_stmt);
 	sqlite3_finalize(m_insertinherit_stmt);
@@ -71,17 +79,28 @@ void ctagread::close_files(void)
 	sqlite3_finalize(m_readsymf_stmt);
 	sqlite3_finalize(m_setsymname_stmt);
 	sqlite3_finalize(m_setsymtype_stmt);
-	sqlite3_finalize(m_setsymtype_stmt);
 	sqlite3_finalize(m_readfile_stmt);
+	sqlite3_finalize(m_readmaxfileid_stmt);
+	sqlite3_finalize(m_insertfile_stmt);
+	sqlite3_finalize(m_readmaxlineid_stmt);
+	sqlite3_finalize(m_insertline_stmt);
+	sqlite3_finalize(m_insertsymbol_stmt);
+	sqlite3_finalize(m_readmaxsymbolid_stmt);
 	
 	m_insertmember_stmt = NULL;
+	m_insertinherit_stmt = NULL;
 	m_readsymclass_stmt = NULL;
 	m_readsym_stmt = NULL;
 	m_readsymf_stmt = NULL;
 	m_setsymname_stmt = NULL;
 	m_setsymtype_stmt = NULL;
-	m_setsymtype_stmt = NULL;
 	m_readfile_stmt = NULL;
+	m_readmaxfileid_stmt = NULL;
+	m_insertfile_stmt = NULL;
+	m_readmaxlineid_stmt = NULL;
+	m_insertline_stmt = NULL;
+	m_insertsymbol_stmt = NULL;
+	m_readmaxsymbolid_stmt = NULL;
 
 	fclose(f_tags);
 	f_tags = NULL;
@@ -114,9 +133,27 @@ ctagread::enResult ctagread::prepare_cqdb(void)
 	rc = prepare_stmt(&m_setsymtype_stmt, "UPDATE symtbl SET symType=? WHERE symID=?;");
 	if (rc != SQLITE_OK) return resSQLError;
 
-    rc = prepare_stmt(&m_readfile_stmt, "SELECT filePath FROM filestbl WHERE filePath=?;");
+    rc = prepare_stmt(&m_readfile_stmt, "SELECT fileID,filePath FROM filestbl WHERE filePath=?;");
 	if (rc != SQLITE_OK) return resSQLError;
 
+    rc = prepare_stmt(&m_readmaxfileid_stmt, "SELECT MAx(fileID) FROM filestbl;");
+	if (rc != SQLITE_OK) return resSQLError;
+	
+    rc = prepare_stmt(&m_insertfile_stmt, "INSERT INTO filestbl VALUES (?,?);");
+	if (rc != SQLITE_OK) return resSQLError;
+	
+    rc = prepare_stmt(&m_readmaxlineid_stmt, "SELECT MAx(lineID) FROM linestbl;");
+	if (rc != SQLITE_OK) return resSQLError;
+	
+    rc = prepare_stmt(&m_insertline_stmt, "INSERT INTO linestbl VALUES (?,?,?,?);");
+	if (rc != SQLITE_OK) return resSQLError;
+	
+    rc = prepare_stmt(&m_insertsymbol_stmt, "INSERT INTO symtbl VALUES (?,?,?,?);");
+	if (rc != SQLITE_OK) return resSQLError;
+	
+    rc = prepare_stmt(&m_readmaxsymbolid_stmt, "SELECT MAx(symID) FROM symtbl;");
+	if (rc != SQLITE_OK) return resSQLError;
+	
 	rc=sqlite3_exec(m_db,   "BEGIN EXCLUSIVE;"
 				"DROP INDEX IF EXISTS memberIDIdx;"
 				"DROP INDEX IF EXISTS groupIDIdx;"
@@ -318,7 +355,7 @@ ctagread::enResult ctagread::process_ctags(void)
 					if (res != resOK) continue;
                     if (!symIDs.empty()) continue; // symbol already exist in for name, file, place in file
 
-                    rc = addSymbolFromTags(sym.get(), fil2.get(), num);
+                    rc = addSymbolFromTags(sym.get(), c, fil2.get(), num);
 
 					if (rc != 0) continue;
 					numOfSumbolsAdded++;
@@ -419,45 +456,102 @@ ctagread::enResult ctagread::finalize(void)
 	return resOK;
 }
 
-bool ctagread::filePathExist(const char* fileName)
+int ctagread::getMaxId(sqlite3_stmt* stmt)
 {
-	bool exist=false;
+	int maxId=0;
+	int rc=0;
+
+	rc = execstmt(stmt);
+	while ((rc == SQLITE_ROW) || (rc == SQLITE_BUSY))
+	{
+		if (rc == SQLITE_ROW)
+		{
+			maxId = (int)sqlite3_column_int(stmt, 1);
+		}
+		rc = sqlite3_step(stmt);
+	}
+	return maxId;
+}
+
+int ctagread::filePathExist(const char* fileName)
+{
+	int fileId=0;
 	int rc=0;
 	std::string s;
-	std::string fn=fileName;
 
 	rc = execstmt(m_readfile_stmt, fileName);
 	while ((rc == SQLITE_ROW) || (rc == SQLITE_BUSY))
 	{
 		if (rc == SQLITE_ROW)
 		{
+			fileId = sqlite3_column_int(m_readfile_stmt,0);
 			s = (const char *)sqlite3_column_text(m_readfile_stmt, 1);
-			if ( s == fn )
-			{
-				exist = true;
-				break;
-			}
 		}
 		rc = sqlite3_step(m_readfile_stmt);
 	}
-	return exist;
+	return fileId;
 }
 
-int ctagread::addSymbolFromTags(const char* symbol, const char* file, const long int num)
+int ctagread::addSymbolFromTags(const char* symbol, char type, const char* file, const long int num)
 {
-	// check file exist, if not add, get file id
-	if ( !filePathExist(file))
+    tempbuf fileIdTxt(0xff), lineIdTxt(0xff), numTxt(0xff), symIdTxt(0xff), typeTxt(0xf);
+    int rc = 0;
+
+    sprintf(numTxt.get(), "%ld", num);
+    // check file exist, if not add, get file id
+	int fileId = filePathExist(file);
+    sprintf(fileIdTxt.get(), "%d", fileId);
+	if (fileId == 0)
 	{
-		
+		fileId = getMaxId(m_readmaxfileid_stmt)+1;
+        sprintf(fileIdTxt.get(), "%d", fileId);
+        rc = execstmt(m_insertfile_stmt, fileIdTxt.get(), file);
+		if (rc != 0)
+		{
+            printf("%s: error insert file\n",__func__);
+			return rc;
+		}
 	}
 
-	// get text info from file
-	std::string lineTxt = "";
-    FILE* fSrcFile = fopen(file, "r");
+    // get text line info from file
+    std::string lineTxt = getFileLineText(file, num);
 
 	// check add lines table (linestbl)
+	int lineId = getMaxId(m_readmaxlineid_stmt);
+	++lineId;
+    sprintf(lineIdTxt.get(), "%d", lineId);
+    rc = execstmt(m_insertline_stmt, fileIdTxt.get(), numTxt.get(), fileIdTxt.get(), lineTxt.c_str());
+    if (rc != 0)
+    {
+        printf("%s: error insert line\n",__func__);
+        return rc;
+    }
 
-	// add symbol
+	int symId = getMaxId(m_readmaxsymbolid_stmt);
+	++symId;
+    sprintf(symIdTxt.get(), "%d", symId);
+    sprintf(typeTxt.get(), "%c", type);
+	
+    // insert symbol
+    rc = execstmt(m_insertsymbol_stmt, symIdTxt.get(), symbol, typeTxt.get(), lineIdTxt.get());
+    if (rc != 0)
+    {
+        printf("%s: error insert symbol\n",__func__);
+        return rc;
+    }
+    return rc;
+}
 
-    return 0;
+std::string ctagread::getFileLineText(const char* file, const long int num)
+{
+    std::ifstream srcfile(file, std::ifstream::in);
+	std::string line = "";
+
+    for (int ix = 0; ix < num; ix++)
+	{
+        std::getline(srcfile,line);
+	}
+	size_t p = line.find_first_not_of(" \t");
+	line.erase(0,p);
+	return line;
 }

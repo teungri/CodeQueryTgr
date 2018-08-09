@@ -90,6 +90,25 @@ int sqlbase::prepare_stmt(sqlite3_stmt** pStmt, const char* sqlquery)
 	return SQLITE_OK;
 }
 
+int sqlbase::execstmt(sqlite3_stmt* pstmt)
+{
+    int rc;
+    rc = sqlite3_reset(pstmt);
+    if (rc != SQLITE_OK)
+    {
+        if (m_debug) printf("SQLBaseErr004: %d, %s\n", rc, sqlite3_errmsg(m_db));
+        return SQLITE_ERROR;
+    }
+    rc = sqlite3_step(pstmt);
+    if ((rc == SQLITE_ROW)||(rc == SQLITE_BUSY)) return rc;
+    if (rc != SQLITE_DONE)
+    {
+        if (m_debug) printf("SQLBaseErr003: %d, %s\n", rc, sqlite3_errmsg(m_db));
+        return SQLITE_ERROR;
+    }
+    return SQLITE_OK;
+}
+
 int sqlbase::execstmt(sqlite3_stmt* pstmt, const char* v1)
 {
 	int rc;

@@ -71,14 +71,26 @@ private:
   sqlite3_stmt *m_setsymname_stmt;
   sqlite3_stmt *m_setsymtype_stmt;
   sqlite3_stmt *m_readfile_stmt;
+  sqlite3_stmt *m_readmaxfileid_stmt;
+  sqlite3_stmt *m_insertfile_stmt;
+  sqlite3_stmt *m_readmaxlineid_stmt;
+  sqlite3_stmt *m_insertline_stmt;
+  sqlite3_stmt *m_insertsymbol_stmt;
+  sqlite3_stmt *m_readmaxsymbolid_stmt;
 
   enResult getListOfClassIDs(strctagIDList *idlist, const char *v1);
   enResult getHListOfClassIDs(strctagIDList *idlist, const char *v1, std::vector<stClsID> *listClsHist);
   enResult getListOfSymIDs(sqlite3_stmt *pstmt, strctagIDList *idlist, const char *v1, const char *v2, const char *v3);
   enResult prepare_cqdb(void);
 
-  bool filePathExist(const char* fileName);
-  int addSymbolFromTags(const char *symbol, const char *file, const long int num);
+  int getMaxId(sqlite3_stmt* stmt);
+  
+  /**
+   * @return, fileId, 0 if not exist
+   */
+  int filePathExist(const char* fileName);
+  int addSymbolFromTags(const char *symbol, char type, const char *file, const long int num);
+  std::string getFileLineText(const char *file, const long int num);
 };
 
 #endif

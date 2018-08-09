@@ -15,13 +15,14 @@
 
 ctagread::ctagread()
 :f_tags(NULL)
-,m_insertstmt(NULL)
-,m_insertinheritstmt(NULL)
-,m_readclassstmt(NULL)
-,m_readsymstmt(NULL)
-,m_writedeststmt(NULL)
-,m_writetypestmt(NULL)
-,m_readsymfstmt(NULL)
+,m_insertmember_stmt(NULL)
+,m_insertinherit_stmt(NULL)
+,m_readsymclass_stmt(NULL)
+,m_readsym_stmt(NULL)
+,m_readsymf_stmt(NULL)
+,m_setsymname_stmt(NULL)
+,m_setsymtype_stmt(NULL)
+,m_readfile_stmt(NULL)
 {
 }
 
@@ -53,26 +54,35 @@ ctagread::enResult ctagread::open_files(const char* sqldb, const char* tagsfn)
 
 void ctagread::close_files(void)
 {
-	sqlite3_reset(m_insertstmt);
-	sqlite3_reset(m_insertinheritstmt);
-	sqlite3_reset(m_readclassstmt);
-	sqlite3_reset(m_readsymstmt);
-	sqlite3_reset(m_writedeststmt);
-	sqlite3_reset(m_writetypestmt);
-	sqlite3_reset(m_readsymfstmt);
-	sqlite3_finalize(m_insertstmt);
-	sqlite3_finalize(m_insertinheritstmt);
-	sqlite3_finalize(m_readclassstmt);
-	sqlite3_finalize(m_readsymstmt);
-	sqlite3_finalize(m_writedeststmt);
-	sqlite3_finalize(m_writetypestmt);
-	sqlite3_finalize(m_readsymfstmt);
-	m_insertstmt = NULL;
-	m_readclassstmt = NULL;
-	m_readsymstmt = NULL;
-	m_writedeststmt = NULL;
-	m_writetypestmt = NULL;
-	m_readsymfstmt = NULL;
+	sqlite3_reset(m_insertmember_stmt);
+	sqlite3_reset(m_insertinherit_stmt);
+	sqlite3_reset(m_readsymclass_stmt);
+	sqlite3_reset(m_readsym_stmt);
+	sqlite3_reset(m_readsymf_stmt);
+	sqlite3_reset(m_setsymname_stmt);
+	sqlite3_reset(m_setsymtype_stmt);
+	sqlite3_reset(m_setsymtype_stmt);
+	sqlite3_reset(m_readfile_stmt);
+	
+	sqlite3_finalize(m_insertmember_stmt);
+	sqlite3_finalize(m_insertinherit_stmt);
+	sqlite3_finalize(m_readsymclass_stmt);
+	sqlite3_finalize(m_readsym_stmt);
+	sqlite3_finalize(m_readsymf_stmt);
+	sqlite3_finalize(m_setsymname_stmt);
+	sqlite3_finalize(m_setsymtype_stmt);
+	sqlite3_finalize(m_setsymtype_stmt);
+	sqlite3_finalize(m_readfile_stmt);
+	
+	m_insertmember_stmt = NULL;
+	m_readsymclass_stmt = NULL;
+	m_readsym_stmt = NULL;
+	m_readsymf_stmt = NULL;
+	m_setsymname_stmt = NULL;
+	m_setsymtype_stmt = NULL;
+	m_setsymtype_stmt = NULL;
+	m_readfile_stmt = NULL;
+
 	fclose(f_tags);
 	f_tags = NULL;
 	sqlite3_close(m_db);
@@ -83,27 +93,28 @@ ctagread::enResult ctagread::prepare_cqdb(void)
 {
 	int rc;
 
-	rc = prepare_stmt(&m_insertstmt, "INSERT INTO membertbl VALUES (?,?,?);");
+	rc = prepare_stmt(&m_insertmember_stmt, "INSERT INTO membertbl VALUES (?,?,?);");
 	if (rc != SQLITE_OK) return resSQLError;
 
-	rc = prepare_stmt(&m_insertinheritstmt, "INSERT INTO inherittbl VALUES (?,?);");
+	rc = prepare_stmt(&m_insertinherit_stmt, "INSERT INTO inherittbl VALUES (?,?);");
 	if (rc != SQLITE_OK) return resSQLError;
 
-	rc = prepare_stmt(&m_readclassstmt, "SELECT symID FROM symtbl WHERE symName=? AND symType=\"c\";");
+	rc = prepare_stmt(&m_readsymclass_stmt, "SELECT symID FROM symtbl WHERE symName=? AND symType=\"c\";");
 	if (rc != SQLITE_OK) return resSQLError;
 
-	//rc = prepare_stmt(&m_readsymstmt, "SELECT symID FROM symtbl WHERE symName=? AND lineid IN (SELECT lineID FROM linestbl WHERE linenum=? AND fileid IN (SELECT fileID FROM filestbl WHERE filePath LIKE ?));");
-	rc = prepare_stmt(&m_readsymstmt, "SELECT symtbl.symID FROM symtbl INNER JOIN linestbl ON (symtbl.symName=? AND symtbl.lineID = linestbl.lineID AND linestbl.linenum=?) INNER JOIN filestbl ON (linestbl.fileID = filestbl.fileID AND filePath LIKE ?);");
+	rc = prepare_stmt(&m_readsym_stmt, "SELECT symtbl.symID FROM symtbl INNER JOIN linestbl ON (symtbl.symName=? AND symtbl.lineID = linestbl.lineID AND linestbl.linenum=?) INNER JOIN filestbl ON (linestbl.fileID = filestbl.fileID AND filePath LIKE ?);");
 	if (rc != SQLITE_OK) return resSQLError;
 
-	rc = prepare_stmt(&m_writedeststmt, "UPDATE symtbl SET symName=? WHERE symID=?;");
+	rc = prepare_stmt(&m_readsymf_stmt, "SELECT symtbl.symID FROM symtbl INNER JOIN linestbl ON (symtbl.symName=? AND symtbl.symType=\"$\" AND symtbl.lineID = linestbl.lineID AND linestbl.linenum=?) INNER JOIN filestbl ON (linestbl.fileID = filestbl.fileID AND filePath LIKE ?);");
 	if (rc != SQLITE_OK) return resSQLError;
 
-	rc = prepare_stmt(&m_writetypestmt, "UPDATE symtbl SET symType=? WHERE symID=?;");
+	rc = prepare_stmt(&m_setsymname_stmt, "UPDATE symtbl SET symName=? WHERE symID=?;");
 	if (rc != SQLITE_OK) return resSQLError;
 
-	//rc = prepare_stmt(&m_readsymfstmt, "SELECT symID FROM symtbl WHERE symName=? AND symType=\"$\" AND lineid IN (SELECT lineID FROM linestbl WHERE linenum=? AND fileid IN (SELECT fileID FROM filestbl WHERE filePath LIKE ?));");
-	rc = prepare_stmt(&m_readsymfstmt, "SELECT symtbl.symID FROM symtbl INNER JOIN linestbl ON (symtbl.symName=? AND symtbl.symType=\"$\" AND symtbl.lineID = linestbl.lineID AND linestbl.linenum=?) INNER JOIN filestbl ON (linestbl.fileID = filestbl.fileID AND filePath LIKE ?);");
+	rc = prepare_stmt(&m_setsymtype_stmt, "UPDATE symtbl SET symType=? WHERE symID=?;");
+	if (rc != SQLITE_OK) return resSQLError;
+
+    rc = prepare_stmt(&m_readfile_stmt, "SELECT filePath FROM filestbl WHERE filePath=?;");
 	if (rc != SQLITE_OK) return resSQLError;
 
 	rc=sqlite3_exec(m_db,   "BEGIN EXCLUSIVE;"
@@ -114,6 +125,7 @@ ctagread::enResult ctagread::prepare_cqdb(void)
 				"DELETE FROM membertbl;"
 				"DELETE FROM inherittbl;"
 				"COMMIT;", NULL, 0, NULL);
+
 	if (rc != SQLITE_OK)
 	{
 		if (m_debug) printf("SQLErr13: %d, %s\n", rc, sqlite3_errmsg(m_db));
@@ -130,6 +142,7 @@ ctagread::enResult ctagread::process_ctags(void)
 	long int num;
 	long int numOfLines=0;
 	long int numOfLines2=0;
+	long int numOfSumbolsAdded=0;
 	char* retval;
 	int scanretval = 0;
 	int rc;
@@ -150,127 +163,182 @@ ctagread::enResult ctagread::process_ctags(void)
 		retval = fgets(linetxt.get(), linetxt.size() - 1, f_tags);
 		if (retval != NULL)
 		{
-			chomp(linetxt.get());
-			scanretval = sscanf(linetxt.get(), "%s\t%s\t%ld;\"\t%c\tclass:%s\t", sym.get(), fil2.get(), &num, &c, classname.get());
-		}
+            chomp(linetxt.get());
+            if (m_debug) printf("line: %s\n", linetxt.get());
+            scanretval = sscanf(linetxt.get(), "%s\t%s\t%ld;\"\t%c\tclass:%s\t", sym.get(), fil2.get(),
+                                &num, &c, classname.get());
+            if (m_debug) printf("scanretval: %d\n", scanretval);
+        }
+        else
+		{
+			if (m_debug) printf("retval==null\n");
+		} 
+
 		if ((retval != NULL)&&(scanretval == 5))
 		{
 			strcpy(fil.get(), "%");
 			strcat(fil.get(), extract_filename(fil2.get()));
-			res = getHListOfClassIDs(&classIDs, get_last_part(get_last_part(classname.get(), ':'), '.'), &listClsHist);
+            res = getHListOfClassIDs(&classIDs, get_last_part(get_last_part(classname.get(), ':'), '.'),
+                                     &listClsHist);
+
 			if (res != resOK) return res;
 			if (classIDs.empty()) continue;
+
 			cp = sym.get();
 			if (*(sym.get()) == '~')
 			{
 				cp = (sym.get()) + 1;   // include destructors
 							// which cscope missed out
 			}
+
 			sprintf(numtxt.get(), "%ld", num);
-			if (c == 'f')
-				res = getListOfSymIDs(m_readsymfstmt, &symIDs, cp, numtxt.get(), fil.get());
-			else
-				res = getListOfSymIDs(m_readsymstmt, &symIDs, cp, numtxt.get(), fil.get());
-			if (res != resOK) {return res;}
+			if (c == 'f') res = getListOfSymIDs(m_readsymf_stmt, &symIDs, cp, numtxt.get(), fil.get());
+			else res = getListOfSymIDs(m_readsym_stmt, &symIDs, cp, numtxt.get(), fil.get());
+
+			if (res != resOK) return res;
+
 			if ((symIDs.empty() == true)&&(c == 'f'))
 			{
-				res = getListOfSymIDs(m_readsymstmt, &symIDs, cp, numtxt.get(), fil.get());
-				if (res != resOK) {return res;}
+				res = getListOfSymIDs(m_readsym_stmt, &symIDs, cp, numtxt.get(), fil.get());
+				if (res != resOK) return res;
+
 				if (symIDs.empty() == false)
-				for (long i=0; i < symIDs.size(); i++)
+				{
+					for (unsigned long i = 0; i < symIDs.size(); i++)
 					{
-						rc=execstmt(m_writetypestmt, "$", symIDs[i].c_str());
-						if (rc!=0) return resSQLError;
+						rc = execstmt(m_setsymtype_stmt, "$", symIDs[i].c_str());
+						if (rc != 0) return resSQLError;
 					}
+				}
 			}
+
 			if (symIDs.empty() == false)
 			{
-				for (long i=0; i < symIDs.size(); i++)
+                for (unsigned long i=0; i < symIDs.size(); i++)
+				{
+					smallstr[0] = c;
+					rc = execstmt(m_insertmember_stmt, classIDs[0].c_str(), symIDs[i].c_str(), smallstr);
+					if (rc != 0) return resSQLError;
+
+					if (*(sym.get()) == '~')
 					{
-						smallstr[0] = c;
-						rc=execstmt(m_insertstmt, classIDs[0].c_str(), symIDs[i].c_str(), smallstr);
-						if (rc!=0) return resSQLError;						
-						if (*(sym.get()) == '~')
-						{
-							rc=execstmt(m_writedeststmt, sym.get(), symIDs[i].c_str());
-							if (rc!=0) return resSQLError;
-						}
-						numOfLines++;
+						rc = execstmt(m_setsymname_stmt, sym.get(), symIDs[i].c_str());
+						if (rc != 0) return resSQLError;
 					}
+					numOfLines++;
+				}
 			}
-			//else {if (m_debug) {printf("no match found for symbol: %s\n",sym.get());}}
-		}
+            else {if (m_debug) {printf("no match found for symbol: %s\n",sym.get());}}
+        }
+
 		if (retval != NULL)
 		{
 			scanretval = sscanf(linetxt.get(),
-			"%s\t%s\t%ld;\"\t%c\tinherits:%s", sym.get(), fil2.get(), &num, &c, classname.get());
+					"%s\t%s\t%ld;\"\t%c\tinherits:%s", sym.get(), fil2.get(), &num, &c, classname.get());
+
 			result = ((scanretval == 5)&&(c == 'c'));
+
 			if (!result)
 			{
-				scanretval = sscanf(linetxt.get(),
-				"%s\t%s\t%ld;\"\t%c\tfile:\tinherits:%s", sym.get(), fil2.get(),
-					&num, &c, classname.get());
+				scanretval = sscanf(linetxt.get(), "%s\t%s\t%ld;\"\t%c\tfile:\tinherits:%s", sym.get(), 
+									fil2.get(), &num, &c, classname.get());
+
 				result = ((scanretval == 5)&&(c == 'c'));
 			}
+
 			if (!result)
 			{
-				scanretval = sscanf(linetxt.get(),
-				"%s\t%s\t%ld;\"\t%c\tclass:%s\tinherits:%s", sym.get(), fil2.get(),
-					&num, &c, classname2.get(), classname.get());
+				scanretval = sscanf(linetxt.get(), "%s\t%s\t%ld;\"\t%c\tclass:%s\tinherits:%s", sym.get(), 
+									fil2.get(), &num, &c, classname2.get(), classname.get());
+
 				result = ((scanretval == 6)&&(c == 'c'));
 			}
+
 			if (!result)
 			{
-				scanretval = sscanf(linetxt.get(),
-				"%s\t%s\t%ld;\"\t%c\tnamespace:%s\tinherits:%s", sym.get(), fil2.get(),
-					&num, &c, nmspace.get(), classname.get());
+				scanretval = sscanf(linetxt.get(), "%s\t%s\t%ld;\"\t%c\tnamespace:%s\tinherits:%s", sym.get(), 
+									fil2.get(), &num, &c, nmspace.get(), classname.get());
+
 				result = ((scanretval == 6)&&(c == 'c'));
 			}
+
 			if (!result)
 			{
-				scanretval = sscanf(linetxt.get(),
-				"%s\t%s\t%ld;\"\t%c\tnamespace:%s\tfile:\tinherits:%s", sym.get(), fil2.get(),
-					&num, &c, nmspace.get(), classname.get());
+				scanretval = sscanf(linetxt.get(), "%s\t%s\t%ld;\"\t%c\tnamespace:%s\tfile:\tinherits:%s", 
+									sym.get(), fil2.get(), &num, &c, nmspace.get(), classname.get());
+
 				result = ((scanretval == 6)&&(c == 'c'));
 			}
+
 			if (result)
 			{
 				res = getHListOfClassIDs(&classIDs, sym.get(), &listClsHist);
 				if (res != resOK) return res;
 				if (classIDs.empty()) continue;
+
 				parentClassIDs.clear();
 				parentClassIDs_temp.clear();
 				std::vector<std::string> vecstr = splitstr(classname.get(), ',');
-				for (long i=0; i<vecstr.size(); i++)
+
+                for (unsigned long i=0; i<vecstr.size(); i++)
 				{
 					res = getHListOfClassIDs(&parentClassIDs_temp, 
-						get_last_part(get_last_part((char*)vecstr[i].c_str(), ':'), '.'), &listClsHist);
+							get_last_part(get_last_part((char*)vecstr[i].c_str(), ':'), '.'), &listClsHist);
 					if (res != resOK) return res;
+
 					while (parentClassIDs_temp.empty() == false)
 					{
 						parentClassIDs.push_back(parentClassIDs_temp.back());
 						parentClassIDs_temp.pop_back();
 					}
 				}
-				for (long i=0; i<parentClassIDs.size(); i++)
+                for (unsigned long i=0; i<parentClassIDs.size(); i++)
 				{
-					rc=execstmt(m_insertinheritstmt, parentClassIDs[i].c_str(), classIDs[0].c_str());
+					rc=execstmt(m_insertinherit_stmt, parentClassIDs[i].c_str(), classIDs[0].c_str());
 					if (rc!=0) return resSQLError;
 					numOfLines2++;
+				}
+            }
+            else
+            {	// no class, inheritance, members etc found. Try to add/update symbol to db.
+				c = '@';
+				scanretval = sscanf(linetxt.get(), "%s\t%s\t%ld;\"\t%c", sym.get(), fil2.get(), &num, &c);
+
+				result = (scanretval >= 4 && c != '@');
+                if (result)
+                {   // probably tags file for html/js/c# tags
+
+                    if (m_debug) printf("%s sym=%s f=%s num=%ld c=%c\n", __func__, sym.get(), fil2.get(), num, c);
+					
+					// check whether symbol already exist
+					symIDs.clear();
+					sprintf(numtxt.get(), "%ld", num);
+					res = getListOfSymIDs(m_readsym_stmt, &symIDs, sym.get(), numtxt.get(), fil2.get());
+
+					if (res != resOK) continue;
+                    if (!symIDs.empty()) continue; // symbol already exist in for name, file, place in file
+
+                    rc = addSymbolFromTags(sym.get(), fil2.get(), num);
+
+					if (rc != 0) continue;
+					numOfSumbolsAdded++;
 				}
 			}
 		}
 	} while (retval != NULL);
-	if (m_debug) printf ("Total membertbl records possible = %ld\n", numOfLines);
-	if (m_debug) printf ("Total inherittbl records possible = %ld\n", numOfLines2);
+    
+    if (m_debug) printf("%s: Total membertbl records possible = %ld\n", __func__, numOfLines);
+    if (m_debug) printf("%s: Total inherittbl records possible = %ld\n", __func__, numOfLines2);
+    if (m_debug) printf("%s: Total #sybols added = %ld\n", __func__, numOfSumbolsAdded);
 	return resOK;
 }
 
-ctagread::enResult ctagread::getHListOfClassIDs(strctagIDList* idlist, const char* v1, std::vector<stClsID> *listClsHist)
+ctagread::enResult ctagread::getHListOfClassIDs(strctagIDList* idlist, const char* v1, 
+                                                std::vector<stClsID> *listClsHist)
 {
 	enResult res = resOK;
 	idlist->clear();
-	for (long i=0; i<listClsHist->size(); i++)
+    for (unsigned long i=0; i<listClsHist->size(); i++)
 	{
 		if ((*listClsHist)[i].cls.compare(v1) == 0)
 		{idlist->push_back((*listClsHist)[i].id); break;}
@@ -293,42 +361,41 @@ ctagread::enResult ctagread::getHListOfClassIDs(strctagIDList* idlist, const cha
 
 ctagread::enResult ctagread::getListOfClassIDs(strctagIDList* idlist, const char* v1)
 {
+	int rc;
+	std::string s;
 
-int rc;
-std::string s;
-
-idlist->clear();
-rc = execstmt(m_readclassstmt, v1);
-while ((rc == SQLITE_ROW)||(rc == SQLITE_BUSY))
+	idlist->clear();
+	rc = execstmt(m_readsymclass_stmt, v1);
+	while ((rc == SQLITE_ROW) || (rc == SQLITE_BUSY))
 	{
 		if (rc == SQLITE_ROW)
 		{
-			s = (const char*) sqlite3_column_text(m_readclassstmt, 0);
+			s = (const char *)sqlite3_column_text(m_readsymclass_stmt, 0);
 			idlist->push_back(s);
 		}
-		rc = sqlite3_step(m_readclassstmt);
+		rc = sqlite3_step(m_readsymclass_stmt);
 	}
-return resOK;
+	return resOK;
 }
 
-ctagread::enResult ctagread::getListOfSymIDs(sqlite3_stmt* pstmt, strctagIDList* idlist, const char* v1, const char* v2, const char* v3)
+ctagread::enResult ctagread::getListOfSymIDs(sqlite3_stmt* pstmt, strctagIDList* idlist, 
+											 const char* v1, const char* v2, const char* v3)
 {
+	int rc;
+	std::string s;
 
-int rc;
-std::string s;
-
-idlist->clear();
-rc = execstmt(pstmt, v1, v2, v3);
-while ((rc == SQLITE_ROW)||(rc == SQLITE_BUSY))
+	idlist->clear();
+	rc = execstmt(pstmt, v1, v2, v3);
+	while ((rc == SQLITE_ROW) || (rc == SQLITE_BUSY))
 	{
 		if (rc == SQLITE_ROW)
 		{
-			s = (const char*) sqlite3_column_text(pstmt, 0);
+			s = (const char *)sqlite3_column_text(pstmt, 0);
 			idlist->push_back(s);
 		}
 		rc = sqlite3_step(pstmt);
 	}
-return resOK;
+	return resOK;
 }
 
 ctagread::enResult ctagread::finalize(void)
@@ -352,3 +419,45 @@ ctagread::enResult ctagread::finalize(void)
 	return resOK;
 }
 
+bool ctagread::filePathExist(const char* fileName)
+{
+	bool exist=false;
+	int rc=0;
+	std::string s;
+	std::string fn=fileName;
+
+	rc = execstmt(m_readfile_stmt, fileName);
+	while ((rc == SQLITE_ROW) || (rc == SQLITE_BUSY))
+	{
+		if (rc == SQLITE_ROW)
+		{
+			s = (const char *)sqlite3_column_text(m_readfile_stmt, 1);
+			if ( s == fn )
+			{
+				exist = true;
+				break;
+			}
+		}
+		rc = sqlite3_step(m_readfile_stmt);
+	}
+	return exist;
+}
+
+int ctagread::addSymbolFromTags(const char* symbol, const char* file, const long int num)
+{
+	// check file exist, if not add, get file id
+	if ( !filePathExist(file))
+	{
+		
+	}
+
+	// get text info from file
+	std::string lineTxt = "";
+    FILE* fSrcFile = fopen(file, "r");
+
+	// check add lines table (linestbl)
+
+	// add symbol
+
+    return 0;
+}

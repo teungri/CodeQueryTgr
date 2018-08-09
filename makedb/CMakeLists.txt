@@ -10,7 +10,8 @@
 cmake_minimum_required(VERSION 3.2.2)
 project(CodeQueryDBMaker)
 
-#add_definitions( -Wall )
+# Compiler flags
+add_definitions( -Wall -g )
 
 find_package(Sqlite REQUIRED)
 

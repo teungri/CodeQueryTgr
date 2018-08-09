@@ -27,6 +27,7 @@ bin/
 html/
 CMakeFiles/
 nbproject/
+.vscode/
 
 # Ignore cscope and ctags files, and our db files
 cscope.files

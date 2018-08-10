@@ -201,15 +201,12 @@ ctagread::enResult ctagread::process_ctags(void)
 		if (retval != NULL)
 		{
             chomp(linetxt.get());
-            if (m_debug) printf("line: %s\n", linetxt.get());
+            // if (m_debug) printf("line: %s\n", linetxt.get());
             scanretval = sscanf(linetxt.get(), "%s\t%s\t%ld;\"\t%c\tclass:%s\t", sym.get(), fil2.get(),
                                 &num, &c, classname.get());
-            if (m_debug) printf("scanretval: %d\n", scanretval);
+            // if (m_debug) printf("scanretval: %d\n", scanretval);
         }
-        else
-		{
-			if (m_debug) printf("retval==null\n");
-		} 
+        // else {if (m_debug) printf("retval==null\n"); }
 
 		if ((retval != NULL)&&(scanretval == 5))
 		{
@@ -265,7 +262,7 @@ ctagread::enResult ctagread::process_ctags(void)
 					numOfLines++;
 				}
 			}
-            else {if (m_debug) {printf("no match found for symbol: %s\n",sym.get());}}
+            // else {if (m_debug) {printf("no match found for symbol: %s\n",sym.get());}}
         }
 
 		if (retval != NULL)
@@ -345,7 +342,7 @@ ctagread::enResult ctagread::process_ctags(void)
                 if (result)
                 {   // probably tags file for html/js/c# tags
 
-                    if (m_debug) printf("%s sym=%s f=%s num=%ld c=%c\n", __func__, sym.get(), fil2.get(), num, c);
+                    // if (m_debug) printf("%s sym=%s f=%s num=%ld c=%c\n", __func__, sym.get(), fil2.get(), num, c);
 					
 					// check whether symbol already exist
 					symIDs.clear();
@@ -364,9 +361,9 @@ ctagread::enResult ctagread::process_ctags(void)
 		}
 	} while (retval != NULL);
     
-    if (m_debug) printf("%s: Total membertbl records possible = %ld\n", __func__, numOfLines);
-    if (m_debug) printf("%s: Total inherittbl records possible = %ld\n", __func__, numOfLines2);
-    if (m_debug) printf("%s: Total #sybols added = %ld\n", __func__, numOfSumbolsAdded);
+    if (m_debug) printf("Total membertbl  records inserted = %8ld\n", numOfLines);
+    if (m_debug) printf("Total inherittbl records inserted = %8ld\n", numOfLines2);
+    if (m_debug) printf("Total symtbl     records inserted = %8ld\n", numOfSumbolsAdded);
 	return resOK;
 }
 
@@ -525,7 +522,7 @@ int ctagread::addSymbolFromTags(const char* symbol, char type, const char* file,
     rc = execstmt(m_insertline_stmt, lineIdTxt.get(), numTxt.get(), fileIdTxt.get(), lineTxt.c_str());
     if (rc != 0)
     {
-        printf("%s: error insert line\n",__func__);
+        printf("%s: error insert line sql error=%d\n",__func__, rc);
         return rc;
     }
 
@@ -538,7 +535,7 @@ int ctagread::addSymbolFromTags(const char* symbol, char type, const char* file,
     rc = execstmt(m_insertsymbol_stmt, symIdTxt.get(), symbol, typeTxt.get(), lineIdTxt.get());
     if (rc != 0)
     {
-        printf("%s: error insert symbol\n",__func__);
+        printf("%s: error insert symbol sql error=%d\n",__func__, rc);
         return rc;
     }
     return rc;

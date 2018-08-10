@@ -31,8 +31,10 @@ int prepare_stmt(sqlite3_stmt** pStmt, const char* sqlquery);
 int execstmt(sqlite3_stmt* pstmt);
 int execstmt(sqlite3_stmt* pstmt, const char* v1);
 int execstmt(sqlite3_stmt* pstmt, const char* v1, const char* v2);
-int execstmt(sqlite3_stmt* pstmt, const char* v1, const char* v2, const char* v3);
-int execstmt(sqlite3_stmt* pstmt, const char* v1, const char* v2, const char* v3, const char* v4);
+int execstmt(sqlite3_stmt* pstmt, const char* v1, const char* v2,
+								  const char* v3);
+int execstmt(sqlite3_stmt* pstmt, const char* v1, const char* v2,
+							      const char* v3, const char* v4);
 int execstmt(sqlite3_stmt* pstmt, const char* v1, const char* v2,
              const char* v3, const char* v4, const char* v5);
 

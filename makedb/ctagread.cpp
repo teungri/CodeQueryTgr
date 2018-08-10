@@ -136,13 +136,13 @@ ctagread::enResult ctagread::prepare_cqdb(void)
     rc = prepare_stmt(&m_readfile_stmt, "SELECT fileID,filePath FROM filestbl WHERE filePath=?;");
 	if (rc != SQLITE_OK) return resSQLError;
 
-    rc = prepare_stmt(&m_readmaxfileid_stmt, "SELECT MAx(fileID) FROM filestbl;");
+    rc = prepare_stmt(&m_readmaxfileid_stmt, "SELECT MAX(fileID) FROM filestbl;");
 	if (rc != SQLITE_OK) return resSQLError;
 	
     rc = prepare_stmt(&m_insertfile_stmt, "INSERT INTO filestbl VALUES (?,?);");
 	if (rc != SQLITE_OK) return resSQLError;
 	
-    rc = prepare_stmt(&m_readmaxlineid_stmt, "SELECT MAx(lineID) FROM linestbl;");
+    rc = prepare_stmt(&m_readmaxlineid_stmt, "SELECT MAX(lineID) FROM linestbl;");
 	if (rc != SQLITE_OK) return resSQLError;
 	
     rc = prepare_stmt(&m_insertline_stmt, "INSERT INTO linestbl VALUES (?,?,?,?);");
@@ -151,7 +151,7 @@ ctagread::enResult ctagread::prepare_cqdb(void)
     rc = prepare_stmt(&m_insertsymbol_stmt, "INSERT INTO symtbl VALUES (?,?,?,?);");
 	if (rc != SQLITE_OK) return resSQLError;
 	
-    rc = prepare_stmt(&m_readmaxsymbolid_stmt, "SELECT MAx(symID) FROM symtbl;");
+    rc = prepare_stmt(&m_readmaxsymbolid_stmt, "SELECT MAX(symID) FROM symtbl;");
 	if (rc != SQLITE_OK) return resSQLError;
 	
 	rc=sqlite3_exec(m_db,   "BEGIN EXCLUSIVE;"
@@ -462,13 +462,15 @@ int ctagread::getMaxId(sqlite3_stmt* stmt)
 	int rc=0;
 
 	rc = execstmt(stmt);
-	while ((rc == SQLITE_ROW) || (rc == SQLITE_BUSY))
+    while ((rc == SQLITE_ROW) || (rc == SQLITE_BUSY))
 	{
 		if (rc == SQLITE_ROW)
 		{
-			maxId = (int)sqlite3_column_int(stmt, 1);
-		}
-		rc = sqlite3_step(stmt);
+            int tempId = (int)sqlite3_column_int(stmt, 0);
+            maxId = (tempId>maxId) ? tempId : maxId;
+            rc = sqlite3_step(stmt);
+            if (rc == SQLITE_DONE) break;
+        }
 	}
 	return maxId;
 }
@@ -520,7 +522,7 @@ int ctagread::addSymbolFromTags(const char* symbol, char type, const char* file,
 	int lineId = getMaxId(m_readmaxlineid_stmt);
 	++lineId;
     sprintf(lineIdTxt.get(), "%d", lineId);
-    rc = execstmt(m_insertline_stmt, fileIdTxt.get(), numTxt.get(), fileIdTxt.get(), lineTxt.c_str());
+    rc = execstmt(m_insertline_stmt, lineIdTxt.get(), numTxt.get(), fileIdTxt.get(), lineTxt.c_str());
     if (rc != 0)
     {
         printf("%s: error insert line\n",__func__);

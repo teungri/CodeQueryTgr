@@ -98,7 +98,7 @@ std::string sym_data::symbname_escaped(void)
 
 const char* sym_data::getTypeDesc(void)
 {
-    for (unsigned long i=0; i<symbtypetbl_SIZE; i++)
+	for (unsigned long i=0; i<symbtypetbl_SIZE; i++)
 	{
 		if (sym_type == symbtypetbl[i].type)
 		{
@@ -110,7 +110,7 @@ const char* sym_data::getTypeDesc(void)
 
 const char sym_data::getTypeChar(void)
 {
-    for (unsigned long i=0; i<symbtypetbl_SIZE; i++)
+	for (unsigned long i=0; i<symbtypetbl_SIZE; i++)
 	{
 		if (sym_type == symbtypetbl[i].type)
 		{
@@ -234,12 +234,9 @@ void csdbparser::create_buf(long int size)
 
 void csdbparser::destroy_buf(void)
 {
-if (m_buf != NULL)
-	{
 	delete[] m_buf;
 	m_buf = NULL;
 	m_bufsize = 0;
-	}
 }
 
 csdbparser::enResult csdbparser::open_file(const char *fn)
@@ -259,8 +256,8 @@ void csdbparser::close_file(void)
 {
 if (m_fp != NULL)
 	{
-	fclose(m_fp);
-	m_fp = NULL;
+		fclose(m_fp);
+		m_fp = NULL;
 	}
 m_trailer_start = 0;
 destroy_buf();
@@ -566,7 +563,7 @@ if (ch == 9) // TAB
 				if (m_debug) printf("Incl found\n");
 				break;
 			default:
-                for (int i=0; i<(long)symbtypetbl_SIZE; i++)
+				for (int i=0; i< (long) symbtypetbl_SIZE; i++)
 					{
 					if (symbtypetbl[i].chr == ch)
 						{

@@ -11,18 +11,15 @@
 
 
 #include <QVector>
-#include "std2qt.h"
+#include <QPair>
 #include "graphdialog.h"
 #include "searchhandler.h"
 
 #ifdef USE_QT5
 #include <QtConcurrent/QtConcurrent>
-#define QT45_TOASCII(x) toLatin1(x)
-#else
-#define QT45_TOASCII(x) toAscii(x)
 #endif
 
-sqlqueryadv* searchhandler::sq = NULL;
+sqlquery* searchhandler::sq = NULL;
 bool searchhandler::m_grepExactMatch = false;
 QRegExp* searchhandler::m_grepRegExp = NULL;
 
@@ -89,7 +86,7 @@ searchhandler::searchhandler(mainwindow* pmw)
 ,m_pushButtonGraph(NULL)
 ,m_pushButtonFilesList(NULL)
 {
-	sq = new sqlqueryadv;
+	sq = new sqlquery;
 	m_completer = new QCompleter(&m_srchStrLstModel, (QWidget*)mw);
 	m_grepRegExp = new QRegExp();
 	m_iter = m_searchMemoryList.begin();
@@ -110,7 +107,7 @@ void searchhandler::OpenDB_ButtonClick(bool checked)
 
 void searchhandler::Search_ButtonClick(bool checked)
 {
-	if (!checked) perform_search(m_comboBoxSearch->lineEdit()->text().trimmed().QT45_TOASCII().data(),
+	if (!checked) perform_search(m_comboBoxSearch->lineEdit()->text().trimmed().C_STR(),
 					m_checkBoxExactMatch->isChecked());
 }
 
@@ -152,7 +149,7 @@ void searchhandler::NextSearch_ButtonClick(bool checked)
 
 void searchhandler::Search_EnterKeyPressed()
 {
-	perform_search(m_comboBoxSearch->lineEdit()->text().trimmed().QT45_TOASCII().data(),
+	perform_search(m_comboBoxSearch->lineEdit()->text().trimmed().C_STR(),
 			m_checkBoxExactMatch->isChecked());
 }
 
@@ -194,10 +191,10 @@ void searchhandler::autoCompleteFinished()
 
 void searchhandler::declarSearchFinished()
 {
-	QString str = m_declarFutureWatcher.result();
-	if (str.length() > 0)
-		emit searchDeclarationResultsReady(str);
+	QStringList strLst = m_declarFutureWatcher.result();
 	m_declarBusy = false;
+	if (strLst.length() > 0)
+		emit searchDeclarationResultsReady(strLst);
 }
 
 void searchhandler::searchDeclaration(QString searchstr)
@@ -243,7 +240,7 @@ void searchhandler::searchFuncList_fileid(int fileid)
 
 sqlqueryresultlist searchhandler::search_funclist_qt_filename(QString filename)
 {
-	return sq->search_funclist_filename(extract_filename(filename.QT45_TOASCII().data()));
+	return sq->search_funclist_filename(extract_filename(filename.C_STR()));
 }
 
 sqlqueryresultlist searchhandler::search_funclist_qt_fileid(int fileid)
@@ -251,22 +248,27 @@ sqlqueryresultlist searchhandler::search_funclist_qt_fileid(int fileid)
 	return sq->search_funclist_fileid(fileid);
 }
 
-QString searchhandler::search_declaration_qt(QString searchtxt)
+QStringList searchhandler::search_declaration_qt(QString searchtxt)
 {
+	QStringList strLst;
 	QString str;
-	sqlqueryresultlist reslst = sq->search_declaration(searchtxt.QT45_TOASCII().data());
+	sqlqueryresultlist reslst = sq->search_declaration(searchtxt.C_STR());
 	if (reslst.resultlist.size() > 0)
-	str.append(reslst.resultlist[0].filename.c_str())
-		.append(":")
-		.append(reslst.resultlist[0].linenum.c_str())
-		.append(" ==> ")
-		.append(reslst.resultlist[0].linetext.c_str());
-	return str;
+	{
+		str.append(reslst.resultlist[0].filename.C_STR())
+			.append(":")
+			.append(reslst.resultlist[0].linenum.C_STR())
+			.append(" ==> ")
+			.append(reslst.resultlist[0].linetext.C_STR());
+		strLst << searchtxt;
+		strLst << str;
+	}
+	return strLst;
 }
 
 QStringList searchhandler::search_autocomplete_qt(QString searchtxt)
 {
-	return strLst2qt(sq->search_autocomplete(searchtxt.QT45_TOASCII().data()));
+	return sq->search_autocomplete(searchtxt.C_STR());
 }
 
 void searchhandler::autoCompleteStateChanged(int state)
@@ -431,7 +433,7 @@ void searchhandler::OpenDB_indexChanged(const int& idx)
 	}
 	sq->close_dbfile();
 	QFileInfo dbfile(m_comboBoxDB->itemText(idx));
-	sqstatus = sq->open_dbfile(qt2str(m_comboBoxDB->itemText(idx)));
+	sqstatus = sq->open_dbfile(m_comboBoxDB->itemText(idx));
 	if (sqstatus != sqlquery::sqlfileOK)
 	{
 		QMessageBox msgBox((QWidget*)mw);
@@ -488,6 +490,7 @@ void searchhandler::QueryType_indexChanged(const int& idx)
         m_comboBoxSearch->setStatusTip(tr("If Exact Match is switched off, wildcard searches (* and ?) are supported"));
 #endif // QT_NO_STATUSTIP
 	}
+	Search_EnterKeyPressed();
 }
 
 void searchhandler::perform_search(QString searchtxt,
@@ -527,20 +530,20 @@ void searchhandler::perform_search(QString searchtxt,
 	if (querytype == sqlquery::sqlresultGREP)
 	{
 		if (filtertxt.isEmpty()) filtertxt = "*";
-		sqlresultlist = sq->search(filtertxt.QT45_TOASCII().data(),
+		sqlresultlist = sq->search(filtertxt.C_STR(),
 				sqlquery::sqlresultFILEPATH, false);
 	}
 	else
 	{
-		sqlresultlist = sq->search(searchtxt.QT45_TOASCII().data(),
+		sqlresultlist = sq->search(searchtxt.C_STR(),
 				querytype, exactmatch,
-				filtertxt.QT45_TOASCII().data());
+				filtertxt.C_STR());
 	}
 	QApplication::restoreOverrideCursor();
 	if (sqlresultlist.result_type == sqlqueryresultlist::sqlresultERROR)
 	{
 		QMessageBox msgBox((QWidget*)mw);
-		msgBox.setText(str2qt(sqlresultlist.sqlerrmsg));
+		msgBox.setText(sqlresultlist.sqlerrmsg);
 		msgBox.exec();
 	}
 	else
@@ -564,7 +567,7 @@ void searchhandler::perform_search(QString searchtxt,
 
 sqlqueryresultlist searchhandler::perform_grep(QString searchtxt, sqlqueryresultlist searchlist, bool exactmatch)
 {
-	QVector<QString> strvec;
+	QVector<QPair<QString, int>> strvec;
 	sqlqueryresultlist resultlist;
 	QFutureWatcher<sqlqueryresultlist> futureWatcher;
 	QProgressDialog dialog;
@@ -573,7 +576,7 @@ sqlqueryresultlist searchhandler::perform_grep(QString searchtxt, sqlqueryresult
 	strvec.resize(n);
 	for (long i=0; i < n; i++)
 	{
-		strvec.replace(i, str2qt(searchlist.resultlist[i].filepath));
+		strvec.replace(i, qMakePair(searchlist.resultlist[i].filepath, searchlist.resultlist[i].fileid));
 	}
 	dialog.setAutoReset(false);
 	dialog.setLabelText(QString("Grep ").append(QString(tr("in progress"))).append(QString(" ...")));
@@ -583,7 +586,7 @@ sqlqueryresultlist searchhandler::perform_grep(QString searchtxt, sqlqueryresult
 	QObject::connect(&futureWatcher, SIGNAL(progressRangeChanged(int,int)), &dialog, SLOT(setRange(int,int)));
 	QObject::connect(&futureWatcher, SIGNAL(progressValueChanged(int)), &dialog, SLOT(setValue(int)));
 	m_grepExactMatch = exactmatch;
-	(*m_grepRegExp) = QRegExp(searchtxt.QT45_TOASCII().data(), Qt::CaseInsensitive);
+	(*m_grepRegExp) = QRegExp(searchtxt.C_STR(), Qt::CaseInsensitive);
 	m_grepRegExp->setPatternSyntax(QRegExp::RegExp2);
 	futureWatcher.setFuture(QtConcurrent::mappedReduced(strvec, doGrep,
 				collateGrep, QtConcurrent::SequentialReduce));
@@ -594,23 +597,21 @@ sqlqueryresultlist searchhandler::perform_grep(QString searchtxt, sqlqueryresult
 	return resultlist;
 }
 
-sqlqueryresultlist searchhandler::doGrep(const QString &fp)
+sqlqueryresultlist searchhandler::doGrep(const QPair<QString, int> &fp)
 {
 	sqlqueryresultlist reslist;
 	sqlqueryresult res;
-	QString str, fp2;
-	tStr fpstr, fn;
+	tStr str, fp2, fn;
 	long pos, linenumber=0;
-	char numtext[10];
+	char numtext[30];
 	QRegExp rx1(*m_grepRegExp);
 	reslist.result_type = sqlqueryresultlist::sqlresultFILE_LINE;
-	fp2 = fp;
+	fp2 = fp.first; // path of file to be searched
 	fp2.replace(QString("$HOME"), QDir::homePath());
 #ifdef _WIN32
 	fp2.replace("/", "\\");
 #endif
-	fpstr = qt2str(fp2);
-	fn = extract_filename(fpstr.c_str());
+	fn = extract_filename(fp2.C_STR());
 	QFile file(fp2);
 	QTextStream in(&file);
 	if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -624,11 +625,12 @@ sqlqueryresultlist searchhandler::doGrep(const QString &fp)
 		pos = rx1.indexIn(str);
 		if (pos != -1)
 		{
-			res.filepath = fpstr;
+			res.filepath = fp2;
 			res.filename = fn;
+			res.fileid = fp.second;
 			sprintf(numtext, "%ld", linenumber);
 			res.linenum = numtext;
-			res.linetext = qt2str(str.trimmed().left(800));
+			res.linetext = str.trimmed().left(800);
 			reslist.resultlist.push_back(res);
 		}
 	}

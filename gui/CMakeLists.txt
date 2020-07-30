@@ -12,13 +12,24 @@ project(CodeQueryGUI)
 
 #ADD_DEFINITIONS( -Wall )
 
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.10.0") 
+foreach(p
+    CMP0071 # 3.10: Let AUTOMOC and AUTOUIC process GENERATED files
+    )
+  if(POLICY ${p})
+    cmake_policy(SET ${p} NEW)
+  endif()
+endforeach()
+endif()
+
+
 
   # with SET() command you can change variables or define new ones
   # here we define CODEQUERY_SRCS variable that contains a list of all .cpp files
   # note that we don't need \ at the end of line
   SET( CODEQUERY_SRCS
-       sqlqueryadv.cpp
-       std2qt.cpp
+       ../querylib/small_lib.cpp
+       ../querylib/sqlquery.cpp
        langtable.cpp
        fileviewer.cpp
        listhandler.cpp
@@ -72,6 +83,22 @@ translations/codequery_zh-CHT.ts
 
   )  
 
+  SET( CQIMAGES_RC_QRC   "${CMAKE_CURRENT_SOURCE_DIR}/cqimages.qrc")
+  SET( CQIMAGES_RC_SRCS  "${CMAKE_CURRENT_BINARY_DIR}/qrc_cqimages.cxx")
+  SET( CQTRANS_RC_QRCT   "${CMAKE_CURRENT_SOURCE_DIR}/cqtrans.qrc.template")
+  SET( CQTRANS_RC_QRC    "${CMAKE_CURRENT_BINARY_DIR}/cqtrans.qrc")
+  SET( CQTRANS_RC_SRCS   "${CMAKE_CURRENT_BINARY_DIR}/qrc_cqtrans.cxx")
+
+if (WIN32)
+  SET( COPY_COMMAND  "copy")
+  string(REPLACE "/" "\\" CQTRANS_RC_QRCT_CP "${CQTRANS_RC_QRCT}")
+  string(REPLACE "/" "\\" CQTRANS_RC_QRC_CP  "${CQTRANS_RC_QRC}")
+else (WIN32)
+  SET( COPY_COMMAND  "cp")
+  SET( CQTRANS_RC_QRCT_CP  "${CQTRANS_RC_QRCT}")
+  SET( CQTRANS_RC_QRC_CP   "${CQTRANS_RC_QRC}")
+endif (WIN32)
+
   add_definitions( -DNO_QDESIGNER_WIDGET_EXPORT )
 
   INCLUDE_DIRECTORIES( "../scintilla/qt/ScintillaEdit" )
@@ -114,44 +141,53 @@ if (BUILD_QT5)
   QT5_ADD_TRANSLATION( QM ${CODEQUERY_TRANS} )  
   
   # this command will generate rules that will run rcc on all files from CODEQUERY_RCS
-  # in result CODEQUERY_RC_SRCS variable will contain paths to files produced by rcc
-  # QT4_ADD_RESOURCES( CODEQUERY_RC_SRCS ${CODEQUERY_RCS} )
+  # in result CQIMAGES_RC_SRCS variable will contain paths to files produced by rcc
+  # QT4_ADD_RESOURCES( CQIMAGES_RC_SRCS ${CODEQUERY_RCS} )
 
-  SET( CODEQUERY_RC_NAME codequery )
-  SET( CODEQUERY_RC_QRC "${CMAKE_CURRENT_SOURCE_DIR}/${CODEQUERY_RC_NAME}.qrc")
-  SET( CODEQUERY_RC_SRCS "${CMAKE_CURRENT_BINARY_DIR}/qrc_${CODEQUERY_RC_NAME}.cxx")
-
-  # Run the resource compiler (rcc_options should already be set). We can't
-  # use QT4_ADD_RESOURCES because the qrc file may not exist yet.
+  # Run the resource compiler (rcc_options should already be set).
   ADD_CUSTOM_COMMAND(
-    OUTPUT ${CODEQUERY_RC_SRCS}
+    OUTPUT ${CQIMAGES_RC_SRCS}
     COMMAND ${QT_RCC_EXECUTABLE}
-    ARGS ${rcc_options} -name ${CODEQUERY_RC_NAME} -o ${CODEQUERY_RC_SRCS} ${CODEQUERY_RC_QRC}
-    DEPENDS ${QM}
+    ARGS ${rcc_options} -name cqimages -o ${CQIMAGES_RC_SRCS} ${CQIMAGES_RC_QRC}
     )
+
+  ADD_CUSTOM_COMMAND(
+    OUTPUT ${CQTRANS_RC_SRCS}
+    COMMAND ${QT_RCC_EXECUTABLE}
+    ARGS ${rcc_options} -name cqtrans -o ${CQTRANS_RC_SRCS} ${CQTRANS_RC_QRC}
+    DEPENDS ${QM} ${CQTRANS_RC_QRC}
+    )
+
+  ADD_CUSTOM_COMMAND(
+    OUTPUT ${CQTRANS_RC_QRC}
+    COMMAND ${COPY_COMMAND}
+    ARGS ${CQTRANS_RC_QRCT_CP} ${CQTRANS_RC_QRC_CP}
+    )
+    
 
   # this will run uic on .ui files:
   QT5_WRAP_UI( CODEQUERY_UI_HDRS ${CODEQUERY_UIS} )
-  
 
   # we need this to be able to include headers produced by uic in our code
   # (CMAKE_BINARY_DIR holds a path to the build directory, while INCLUDE_DIRECTORIES() works just like INCLUDEPATH from qmake)
   INCLUDE_DIRECTORIES( "${Qt5Widgets_INCLUDE_DIRS}" )
 
 if(WIN32)
-  SET(CQ_WIN_RCS cqwin32.rc)
-  add_executable( codequery WIN32 ${CODEQUERY_SRCS} ${CODEQUERY_MOC_SRCS} ${CODEQUERY_RC_SRCS} ${CODEQUERY_UI_HDRS} ${QM} ${CQ_WIN_RCS} )
-  target_link_libraries( codequery Qt5::Widgets Qt5::Concurrent Qt5::WinMain ${SQLITE_LIBRARIES} sqlquery_lib small_lib cqshowgraph-qt5 scintillaedit)
+  SET(CQ_WIN_RCS cqwin64.rc)
+  add_executable( codequery WIN32 ${CODEQUERY_SRCS} ${CODEQUERY_MOC_SRCS} ${CQIMAGES_RC_SRCS} ${CQTRANS_RC_SRCS} ${CODEQUERY_UI_HDRS} ${QM} ${CQ_WIN_RCS} )
+  target_link_libraries( codequery Qt5::Widgets Qt5::Concurrent Qt5::WinMain ${SQLITE_LIBRARIES} cqshowgraph-qt5 scintillaedit)
 else()
-  add_executable( codequery ${CODEQUERY_SRCS} ${CODEQUERY_MOC_SRCS} ${CODEQUERY_RC_SRCS} ${CODEQUERY_UI_HDRS} ${QM} )
-  target_link_libraries( codequery Qt5::Widgets Qt5::Concurrent ${SQLITE_LIBRARIES} sqlquery_lib small_lib cqshowgraph-qt5 scintillaedit)
+  add_executable( codequery ${CODEQUERY_SRCS} ${CODEQUERY_MOC_SRCS} ${CQIMAGES_RC_SRCS} ${CQTRANS_RC_SRCS} ${CODEQUERY_UI_HDRS} ${QM} )
+  target_link_libraries( codequery Qt5::Widgets Qt5::Concurrent ${SQLITE_LIBRARIES} cqshowgraph-qt5 scintillaedit)
 endif()
   
   install(TARGETS codequery RUNTIME DESTINATION bin)
 
 
 else (BUILD_QT5)
- 
+
+  add_definitions( -DUSE_QT4 )
+
   # by default only QtCore and QtGui modules are enabled
   # other modules must be enabled like this:
   #SET( QT_USE_QTXML TRUE )
@@ -169,22 +205,29 @@ else (BUILD_QT5)
   QT4_ADD_TRANSLATION( QM ${CODEQUERY_TRANS} )  
   
   # this command will generate rules that will run rcc on all files from CODEQUERY_RCS
-  # in result CODEQUERY_RC_SRCS variable will contain paths to files produced by rcc
-  # QT4_ADD_RESOURCES( CODEQUERY_RC_SRCS ${CODEQUERY_RCS} )
+  # in result CQIMAGES_RC_SRCS variable will contain paths to files produced by rcc
+  # QT4_ADD_RESOURCES( CQIMAGES_RC_SRCS ${CODEQUERY_RCS} )
 
-
-  SET( CODEQUERY_RC_NAME codequery )
-  SET( CODEQUERY_RC_QRC "${CMAKE_CURRENT_SOURCE_DIR}/${CODEQUERY_RC_NAME}.qrc")
-  SET( CODEQUERY_RC_SRCS "${CMAKE_CURRENT_BINARY_DIR}/qrc_${CODEQUERY_RC_NAME}.cxx")
-
-  # Run the resource compiler (rcc_options should already be set). We can't
-  # use QT4_ADD_RESOURCES because the qrc file may not exist yet.
+  # Run the resource compiler (rcc_options should already be set).
   ADD_CUSTOM_COMMAND(
-    OUTPUT ${CODEQUERY_RC_SRCS}
+    OUTPUT ${CQIMAGES_RC_SRCS}
     COMMAND ${QT_RCC_EXECUTABLE}
-    ARGS ${rcc_options} -name ${CODEQUERY_RC_NAME} -o ${CODEQUERY_RC_SRCS} ${CODEQUERY_RC_QRC}
-    DEPENDS ${QM}
+    ARGS ${rcc_options} -name cqimages -o ${CQIMAGES_RC_SRCS} ${CQIMAGES_RC_QRC}
     )
+
+  ADD_CUSTOM_COMMAND(
+    OUTPUT ${CQTRANS_RC_SRCS}
+    COMMAND ${QT_RCC_EXECUTABLE}
+    ARGS ${rcc_options} -name cqtrans -o ${CQTRANS_RC_SRCS} ${CQTRANS_RC_QRC}
+    DEPENDS ${QM} ${CQTRANS_RC_QRC}
+    )
+
+  ADD_CUSTOM_COMMAND(
+    OUTPUT ${CQTRANS_RC_QRC}
+    COMMAND ${COPY_COMMAND}
+    ARGS ${CQTRANS_RC_QRCT_CP} ${CQTRANS_RC_QRC_CP}
+    )
+    
 
   # this will run uic on .ui files:
   QT4_WRAP_UI( CODEQUERY_UI_HDRS ${CODEQUERY_UIS} )
@@ -195,17 +238,15 @@ else (BUILD_QT5)
 
 if(WIN32)
   SET(CQ_WIN_RCS cqwin32.rc)
-  add_executable( codequery WIN32 ${CODEQUERY_SRCS} ${CODEQUERY_MOC_SRCS} ${CODEQUERY_RC_SRCS} ${CODEQUERY_UI_HDRS} ${QM} ${CQ_WIN_RCS} )
+  add_executable( codequery WIN32 ${CODEQUERY_SRCS} ${CODEQUERY_MOC_SRCS} ${CQIMAGES_RC_SRCS} ${CQTRANS_RC_SRCS} ${CODEQUERY_UI_HDRS} ${QM} ${CQ_WIN_RCS} )
 else()
-  add_executable( codequery ${CODEQUERY_SRCS} ${CODEQUERY_MOC_SRCS} ${CODEQUERY_RC_SRCS} ${CODEQUERY_UI_HDRS} ${QM} )
+  add_executable( codequery ${CODEQUERY_SRCS} ${CODEQUERY_MOC_SRCS} ${CQIMAGES_RC_SRCS} ${CQTRANS_RC_SRCS} ${CODEQUERY_UI_HDRS} ${QM} )
 endif()
 
-  target_link_libraries( codequery ${QT_LIBRARIES} ${SQLITE_LIBRARIES} sqlquery_lib small_lib cqshowgraph scintillaedit)
+  target_link_libraries( codequery ${QT_LIBRARIES} ${SQLITE_LIBRARIES} cqshowgraph scintillaedit)
   
   install(TARGETS codequery RUNTIME DESTINATION bin)
 
 endif (BUILD_QT5)
-
-
 
 

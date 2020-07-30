@@ -23,13 +23,6 @@
 #include "mainwindow.h"
 #include "fileviewsettingsdialog.h"
 #include "themes.h"
-#include "std2qt.h"
-
-#ifdef USE_QT5
-#define QT45_TOASCII(x) toLatin1(x)
-#else
-#define QT45_TOASCII(x) toAscii(x)
-#endif
 
 #ifdef _WIN32
 #define EXT_EDITOR_DEFAULT_PATH "notepad %f"
@@ -85,8 +78,8 @@ bool filedata::compareFileNameOnly(const filedata& fd)
 	if ((fileid < 0)||(fd.fileid < 0))
 	{
 		cmp =(strcmp(
-		extract_filename(filename.QT45_TOASCII().data()),
-		extract_filename(fd.filename.QT45_TOASCII().data())) == 0);
+		extract_filename(filename.C_STR()),
+		extract_filename(fd.filename.C_STR())) == 0);
 	}
 	else
 	{
@@ -165,6 +158,34 @@ void fileviewer::createFontList(void)
 	m_fontlist = fixedpitch;
 }
 
+QString fileviewer::checkFontFamily(QString fontname)
+{
+	QString newfont;
+#ifdef _WIN32
+	QString tryfont1 = "Consolas";
+	QString tryfont2 = "Courier New";
+#else
+	QString tryfont1 = "Monospace";
+	QString tryfont2 = "Ubuntu Mono";
+#endif
+	if (m_fontlist.isEmpty()) createFontList();
+	if (m_fontlist.contains(fontname))
+	{
+		newfont = fontname;
+	}
+	else
+	{
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 2, 0))
+		newfont = QFontDatabase::systemFont(QFontDatabase::FixedFont).family();
+#else
+		if      (m_fontlist.contains(tryfont1)) newfont = tryfont1;
+		else if (m_fontlist.contains(tryfont2)) newfont = tryfont2;
+		else newfont = m_fontlist[0];
+#endif
+	}
+	return newfont;
+}
+
 void fileviewer::init(void)
 {
 	Scintilla_LinkLexers();
@@ -205,8 +226,8 @@ void fileviewer::init(void)
 			this, SLOT(TextShrink_ButtonClick(bool)));
 	connect(m_pushButtonTextEnlarge, SIGNAL(clicked(bool)),
 			this, SLOT(TextEnlarge_ButtonClick(bool)));
-	connect(m_listWidgetFunc, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
-			this, SLOT(funcItemSelected(QListWidgetItem *, QListWidgetItem *)));
+	connect(m_listWidgetFunc, SIGNAL(itemPressed(QListWidgetItem *)),
+			this, SLOT(funcItemSelected(QListWidgetItem *)));
 	connect(m_comboBoxFuncListSort, SIGNAL(currentIndexChanged(int)),
 			this, SLOT(FuncListSort_indexChanged(int)));
 	m_fileDataList.clear();
@@ -382,7 +403,7 @@ void fileviewer::updateTextEdit(void)
 	m_textEditSource->setReadOnly(false);
 	m_textEditSource->setText(alltext.toUtf8().data());
 	m_textEditSource->setReadOnly(true);
-	m_textEditSource->setMarginWidthN(0,  m_textEditSource->textWidth(STYLE_LINENUMBER, QString::number(m_textEditSource->lineCount() * 10).QT45_TOASCII().data()));
+	m_textEditSource->setMarginWidthN(0,  m_textEditSource->textWidth(STYLE_LINENUMBER, QString::number(m_textEditSource->lineCount() * 10).C_STR()));
 	highlightLine(m_iter->linenum.toInt());
 	updateFilePathLabel();
 	m_pushButtonGoToLine->setEnabled(true);
@@ -416,6 +437,39 @@ void fileviewer::braceMatchCheck(void)
 		matchpos = m_textEditSource->braceMatch(cpos, 0);
 	}
 	if (matchpos != -1) m_textEditSource->braceHighlight(cpos, matchpos);
+	else m_textEditSource->braceHighlight(-1, -1);
+}
+
+void fileviewer::updateFuncList(void)
+{
+	if (m_funclist.resultlist.empty()) return;
+	long line = m_textEditSource->lineFromPosition(m_textEditSource->currentPos()) + 1;
+	tStr selectedfunc = "";
+	unsigned int selectedline, line1;
+	auto previt = m_funclist.resultlist.begin();
+	for (auto it = m_funclist.resultlist.begin(); it != m_funclist.resultlist.end(); it++)
+	{
+		if ( (line < it->intLinenum) && (line >= previt->intLinenum) )
+		{
+			selectedfunc = previt->symname;
+			selectedline = previt->intLinenum;
+			break;
+		}
+		previt = it;
+	}
+	if (selectedfunc.isEmpty() == false)
+	{
+		auto itemlist = m_listWidgetFunc->findItems(selectedfunc, Qt::MatchExactly);
+		for (auto it = itemlist.begin(); it != itemlist.end(); it++)
+		{
+			line1 = (*it)->data(Qt::UserRole).toUInt();
+			if (selectedline == line1)
+			{
+				m_listWidgetFunc->setCurrentItem(*it);
+				break;
+			}
+		}
+	}
 }
 
 void fileviewer::AbleToCopy(bool copy)
@@ -423,13 +477,16 @@ void fileviewer::AbleToCopy(bool copy)
 	m_pushButtonPaste->setEnabled(copy);
 	m_textEditSource->annotationClearAll();
 	braceMatchCheck();
+	updateFuncList();
 	if (copy)
 	{
 		m_textEditSource->copy();
 		m_annotline = m_textEditSource->lineFromPosition(m_textEditSource->selectionEnd());
 		QString str = (QApplication::clipboard())->text();
 		if (str.length() > 0)
+		{
 			emit requestAnnotation(str);
+		}
 	}
 }
 
@@ -645,7 +702,7 @@ void fileviewer::textSizeChange(int n)
 	//m_lexer->setFont(m_textEditSourceFont);
 	m_fontsize += n;
 	m_textEditSource->setZoom(m_fontsize);
-	m_textEditSource->setMarginWidthN(0,  m_textEditSource->textWidth(STYLE_LINENUMBER, QString::number(m_textEditSource->lineCount() * 10).QT45_TOASCII().data()));
+	m_textEditSource->setMarginWidthN(0,  m_textEditSource->textWidth(STYLE_LINENUMBER, QString::number(m_textEditSource->lineCount() * 10).C_STR()));
 	//m_textEditSource->setTabWidth(m_fontwidthtemp);
 }
 
@@ -760,19 +817,29 @@ void fileviewer::replaceLexer(int sclang, int lang)
 		m_textEditSource->markerSetBack(m_markerhandle2, themes::QC2SC(linenumfgcolor));
 		m_textEditSource->markerSetAlpha(m_markerhandle, SC_ALPHA_NOALPHA);
 		m_textEditSource->markerSetAlpha(m_markerhandle2, SC_ALPHA_NOALPHA);
-		m_textEditSource->styleSetFont(STYLE_LINENUMBER, m_textEditSourceFont.family().QT45_TOASCII().data());
+		m_textEditSource->styleSetFont(STYLE_LINENUMBER, m_textEditSourceFont.family().C_STR());
 		m_textEditSource->setZoom(m_fontsize);
-		m_textEditSource->setMarginWidthN(0, m_textEditSource->textWidth(STYLE_LINENUMBER, QString::number(m_textEditSource->lineCount() * 10).QT45_TOASCII().data()));
+		m_textEditSource->setMarginWidthN(0, m_textEditSource->textWidth(STYLE_LINENUMBER, QString::number(m_textEditSource->lineCount() * 10).C_STR()));
 		themes::setKeywords(lang, m_textEditSource);
 		m_textEditSource->colourise(0, -1);
 	}
 }
 
-void fileviewer::annotate(QString annotstr)
+void fileviewer::annotate(QStringList annotstrLst)
 {
-	m_textEditSource->annotationClearAll();
-	m_textEditSource->annotationSetText(m_annotline, annotstr.toUtf8().data());
-	m_textEditSource->annotationSetStyle(m_annotline, 29);
+	m_textEditSource->copy();
+	QString str = (QApplication::clipboard())->text();
+	m_annotline = m_textEditSource->lineFromPosition(m_textEditSource->selectionEnd());
+	if ((annotstrLst.length() >= 2)&&(annotstrLst[0] == str))
+	{
+		m_textEditSource->annotationClearAll();
+		m_textEditSource->annotationSetText(m_annotline, annotstrLst[1].toUtf8().data());
+		m_textEditSource->annotationSetStyle(m_annotline, 29);
+	}
+	else if (str.length() > 0)
+	{
+		emit requestAnnotation(str);
+	}
 }
 
 void fileviewer::recvFuncList(sqlqueryresultlist* reslist)
@@ -780,38 +847,34 @@ void fileviewer::recvFuncList(sqlqueryresultlist* reslist)
 	m_listWidgetFunc->clear();
 	if ((m_fileDataList.isEmpty())||(m_iter == m_fileDataList.end())) return;
 	m_funclist = *reslist;
-	filedata fd(str2qt(m_funclist.resultlist[0].filename), "1", -99);
+	m_funclist.sort_by_linenum();
+	for (auto it = m_funclist.resultlist.begin(); it != m_funclist.resultlist.end(); it++)
+	{
+		it->intLinenum = atoi(it->linenum.C_STR());
+	}
+	filedata fd(m_funclist.resultlist[0].filename, "1", -99);
 	if (m_iter->compareFileNameOnly(fd) == false)
 	{
 		if (m_iter->fileid < 0)	{emit requestFuncList_filename(m_iter->filename);}
 		else {emit requestFuncList_fileid(m_iter->fileid);}
 		return;
 	}
-	if (m_comboBoxFuncListSort->currentIndex() == 0)
-		{m_funclist.sort_by_linenum();}
-	else
-		{m_funclist.sort_by_name();}
-	for (int i=0; i < m_funclist.resultlist.size(); i++)
+	sqlqueryresultlist templist = m_funclist;
+	if (m_comboBoxFuncListSort->currentIndex() != 0) templist.sort_by_name();
+	QListWidgetItem* item;
+	for (auto it = templist.resultlist.begin(); it != templist.resultlist.end(); it++)
 	{
-		m_listWidgetFunc->addItem(new QListWidgetItem(
-			str2qt(m_funclist.resultlist[i].symname), 0, 
-			atoi(m_funclist.resultlist[i].linenum.c_str())));
+		item = new QListWidgetItem(it->symname);
+		item->setData(Qt::UserRole, QVariant(it->intLinenum));
+		m_listWidgetFunc->addItem(item);
 	}
 }
 
-void fileviewer::funcItemSelected(QListWidgetItem * curitem, QListWidgetItem * previtem)
+void fileviewer::funcItemSelected(QListWidgetItem * curitem)
 {
-	if (curitem == NULL) return;
-	int num = curitem->type();
-	if (num <= 0)
-	{
-		num = 1;
-	}
-	else
-	{
-		num = num - 1; // not sure why it's one off
-	}
-	m_textEditSource->setFirstVisibleLine(num);
+	if (curitem == nullptr) return;
+	unsigned int num = curitem->data(Qt::UserRole).toUInt();
+	m_textEditSource->setFirstVisibleLine(num - 1);
 }
 
 void fileviewer::FuncListSort_indexChanged(const int& idx)

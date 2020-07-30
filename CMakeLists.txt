@@ -11,19 +11,22 @@ cmake_minimum_required(VERSION 3.2.2)
 project(CodeQuery)
 
 
-option(BUILD_QT5 ON)
-option(NO_GUI    OFF)
+option(BUILD_QT5 "Qt5 option"    ON)
+option(NO_GUI    "No GUI option" OFF)
 
-SET( SQLITE_INCLUDE_DIR "c:\\Projects\\SqLite\\src")
+MESSAGE("-- NO_GUI = " ${NO_GUI})
 SET( SQLITE_LIBRARIES "c:\\Projects\\SqLite" )
 SET( BUILD_QT5 TRUE ) 
 SET( MSVC FALSE )
 
 if (NO_GUI)
 else (NO_GUI)
+MESSAGE("-- BUILD_QT5 = " ${BUILD_QT5})
+endif(NO_GUI)
+
+# C++11 now always required
 SET( CMAKE_CXX_STANDARD 11 )
 SET( CMAKE_CXX_STANDARD_REQUIRED ON )
-endif (NO_GUI)
 
 IF(MSVC)
 ADD_DEFINITIONS(/D _CRT_SECURE_NO_WARNINGS)
@@ -49,24 +52,25 @@ add_subdirectory( "showgraph" )
 add_subdirectory( "gui" )
 endif (NO_GUI)
 
+# Increasing minimum version numbers of dependencies to support Ubuntu 16.04 LTS (xenial)
 
 if (UNIX)
 
 if (NO_GUI)
 
 set( CPACK_PACKAGE_NAME "codequery-nogui" )
-set( CPACK_DEBIAN_PACKAGE_DEPENDS "libsqlite3-0 (>= 3.7.0) " )
+set( CPACK_DEBIAN_PACKAGE_DEPENDS "libsqlite3-0 (>= 3.11.0) " )
 
 else (NO_GUI)
 if (BUILD_QT5)
 
 set( CPACK_PACKAGE_NAME "codequery-qt5" )
-set( CPACK_DEBIAN_PACKAGE_DEPENDS "qtbase5-dev (>= 5.4.0) , libsqlite3-0 (>= 3.7.0) " )
+set( CPACK_DEBIAN_PACKAGE_DEPENDS "qtbase5-dev (>= 5.5.1) , libsqlite3-0 (>= 3.11.0) " )
 
 else (BUILD_QT5)
 
 set( CPACK_PACKAGE_NAME "codequery-qt4" )
-set( CPACK_DEBIAN_PACKAGE_DEPENDS "libqtcore4 (>= 4.8.0), libqtgui4 (>= 4.8.0) , libqt4-xml (>= 4.8.0) , libsqlite3-0 (>= 3.7.0) " )
+set( CPACK_DEBIAN_PACKAGE_DEPENDS "libqtcore4 (>= 4.8.7), libqtgui4 (>= 4.8.7) , libqt4-xml (>= 4.8.7) , libsqlite3-0 (>= 3.11.0) " )
 
 endif (BUILD_QT5)
 endif (NO_GUI)
@@ -79,7 +83,7 @@ endif (NO_GUI)
   endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 
 set( CPACK_GENERATOR "DEB;TGZ")
-set( CPACK_PACKAGE_VERSION  "0.21.0" )
+set( CPACK_PACKAGE_VERSION  "0.23.0" )
 set( CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-Linux-${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}" ) 
 set( CPACK_PACKAGE_DESCRIPTION_SUMMARY "Code understanding and searching tool")
 set( CPACK_PACKAGE_DESCRIPTION "Code understanding and searching tool")

@@ -47,8 +47,8 @@
 #define SQL_PARENTCLASS "SELECT symtbl.symName,symtbl.symType,filestbl.filePath,linestbl.linenum,linestbl.linetext,linestbl.fileID FROM symtbl INNER JOIN linestbl ON symtbl.lineID=linestbl.lineID AND symtbl.symID IN (SELECT parentID FROM inherittbl WHERE childID IN (SELECT symID FROM symtbl WHERE symName LIKE ? ESCAPE \";\")) INNER JOIN filestbl ON (linestbl.fileID=filestbl.fileID AND filestbl.filePath LIKE ? ESCAPE \";\");"
 #define SQL_CHILDCLASS "SELECT symtbl.symName,symtbl.symType,filestbl.filePath,linestbl.linenum,linestbl.linetext,linestbl.fileID FROM symtbl INNER JOIN linestbl ON symtbl.lineID=linestbl.lineID AND symtbl.symID IN (SELECT childID FROM inherittbl WHERE parentID IN (SELECT symID FROM symtbl WHERE symName LIKE ? ESCAPE \";\")) INNER JOIN filestbl ON (linestbl.fileID=filestbl.fileID AND filestbl.filePath LIKE ? ESCAPE \";\");"
 #define SQL_INCLUDE "SELECT filestbl.filePath,linestbl.linenum,linestbl.linetext,linestbl.fileID FROM symtbl INNER JOIN linestbl ON symtbl.lineID=linestbl.lineID AND symtbl.symID IN (SELECT symID FROM symtbl WHERE symName LIKE ? ESCAPE \";\" AND symType=\"~\") INNER JOIN filestbl ON linestbl.fileID=filestbl.fileID;"
-#define SQL_FILEPATH "SELECT DISTINCT filePath FROM filestbl WHERE filePath LIKE ? ESCAPE \";\";"
-#define SQL_FILESLIST "SELECT DISTINCT filePath FROM filestbl WHERE filePath LIKE ? ESCAPE \";\" ORDER BY filePath ASC;"
+#define SQL_FILEPATH "SELECT DISTINCT filePath, fileID FROM filestbl WHERE filePath LIKE ? ESCAPE \";\";"
+#define SQL_FILESLIST "SELECT DISTINCT filePath, fileID FROM filestbl WHERE filePath LIKE ? ESCAPE \";\" ORDER BY filePath ASC;"
 #define SQL_AUTOCOMPLETE "SELECT DISTINCT symName FROM symtbl WHERE symName LIKE ? ORDER BY symName LIMIT 20;"
 #define SQL_FUNCSINFILE "SELECT symtbl.symName,symtbl.symType,filestbl.filePath,linestbl.linenum,linestbl.linetext,linestbl.fileID FROM symtbl INNER JOIN linestbl ON symtbl.lineID=linestbl.lineID AND symtbl.symID IN (SELECT symID FROM symtbl WHERE (symtbl.symType=\"$\" OR symtbl.symType=\"#\")) INNER JOIN filestbl ON (linestbl.fileID=filestbl.fileID AND filestbl.filePath LIKE ? ESCAPE \";\");"
 
@@ -67,8 +67,8 @@
 #define SQL_EM_PARENTCLASS "SELECT symtbl.symName,symtbl.symType,filestbl.filePath,linestbl.linenum,linestbl.linetext,linestbl.fileID FROM symtbl INNER JOIN linestbl ON symtbl.lineID=linestbl.lineID AND symtbl.symID IN (SELECT parentID FROM inherittbl WHERE childID IN (SELECT symID FROM symtbl WHERE symName=?)) INNER JOIN filestbl ON (linestbl.fileID=filestbl.fileID AND filestbl.filePath LIKE ? ESCAPE \";\");"
 #define SQL_EM_CHILDCLASS "SELECT symtbl.symName,symtbl.symType,filestbl.filePath,linestbl.linenum,linestbl.linetext,linestbl.fileID FROM symtbl INNER JOIN linestbl ON symtbl.lineID=linestbl.lineID AND symtbl.symID IN (SELECT childID FROM inherittbl WHERE parentID IN (SELECT symID FROM symtbl WHERE symName=?)) INNER JOIN filestbl ON (linestbl.fileID=filestbl.fileID AND filestbl.filePath LIKE ? ESCAPE \";\");"
 #define SQL_EM_INCLUDE "SELECT filestbl.filePath,linestbl.linenum,linestbl.linetext,linestbl.fileID FROM symtbl INNER JOIN linestbl ON symtbl.lineID=linestbl.lineID AND symtbl.symID IN (SELECT symID FROM symtbl WHERE symName=? AND symType=\"~\") INNER JOIN filestbl ON linestbl.fileID=filestbl.fileID;"
-#define SQL_EM_FILEPATH "SELECT DISTINCT filePath FROM filestbl WHERE filePath=?;"
-#define SQL_EM_FILESLIST "SELECT DISTINCT filePath FROM filestbl WHERE filePath=? ORDER BY filePath ASC;"
+#define SQL_EM_FILEPATH "SELECT DISTINCT filePath, fileid FROM filestbl WHERE filePath=?;"
+#define SQL_EM_FILESLIST "SELECT DISTINCT filePath, fileid FROM filestbl WHERE filePath=? ORDER BY filePath ASC;"
 #define SQL_DECLARATION "SELECT symtbl.symName,symtbl.symType,filestbl.filePath,linestbl.linenum,linestbl.linetext,linestbl.fileID FROM symtbl INNER JOIN linestbl ON symtbl.symID IN (SELECT symID FROM symtbl WHERE symName=?) AND (symtbl.symType=\"$\" OR symtbl.symType=\"#\" OR symtbl.symType=\"c\" OR symtbl.symType=\"s\") AND symtbl.lineID=linestbl.lineID INNER JOIN filestbl ON (linestbl.fileID=filestbl.fileID) LIMIT 1;"
 
 struct nameasc
@@ -156,17 +156,17 @@ sqlquery::~sqlquery()
 
 sqlquery::en_filereadstatus sqlquery::open_dbfile(tStr dbfn)
 {
-	if (dbfn.empty()) return sqlfileOPENERROR;
+	if (dbfn.STRISEMPTY()) return sqlfileOPENERROR;
 
 	smartFILE fp;
 	// Does the file exist?
-	if (check_fileExists(dbfn.c_str()) == false) {return sqlfileOPENERROR;}
+	if (check_fileExists(dbfn.C_STR()) == false) {return sqlfileOPENERROR;}
 	// Try to open the file for reading
-	fp = fopen(dbfn.c_str(), "r");
+	fp = fopen(dbfn.C_STR(), "r");
 	if (fp == NULL) {return sqlfileOPENERROR;}
 	fp.close_file();
 
-	int rc = sqlite3_open_v2(dbfn.c_str(),
+	int rc = sqlite3_open_v2(dbfn.C_STR(),
 						&m_db, SQLITE_OPEN_READONLY, NULL);
 	if ((rc != SQLITE_OK)||(m_db == NULL)) 
 	{
@@ -183,12 +183,12 @@ sqlquery::en_filereadstatus sqlquery::open_dbfile(tStr dbfn)
 
 	tStr majorver = read_configtbl("DB_MAJOR_VER", stmt.get());
 	tStr minorver = read_configtbl("DB_MINOR_VER", stmt.get());
-	if ((majorver.empty())||(minorver.empty()))
+	if ((majorver.STRISEMPTY())||(minorver.STRISEMPTY()))
 		{return sqlfileNOTCORRECTDB;}
 	if (majorver.compare(tStr("0")) != 0) return sqlfileINCORRECTVER;
 	if (minorver.compare(tStr("1")) != 0) return sqlfileINCORRECTVER;
 	m_basepath = read_configtbl("DB_BASE_PATH", stmt.get());
-	if (m_basepath.empty()) {return sqlfileNOTCORRECTDB;}
+	if (m_basepath.STRISEMPTY()) {return sqlfileNOTCORRECTDB;}
 	rc = sqlite3_prepare_v2(m_db, SQL_AUTOCOMPLETE, strlen(SQL_AUTOCOMPLETE),
 							&(m_autocompstmt.m_stmt), NULL);
 	rc = sqlite3_prepare_v2(m_db, SQL_FUNCSINONEFILE, strlen(SQL_FUNCSINONEFILE),
@@ -244,7 +244,7 @@ sqlqueryresultlist sqlquery::search_funclist_filename(const char* searchstr)
 	srchterm.append(searchstr);
 	if ((searchstr == NULL)||(strlen(searchstr) < 1)||(m_db == NULL)) return result;
 	sqlite3_reset(m_funclistfilenamestmt.get());
-	int rc = sqlite3_bind_text(m_funclistfilenamestmt.get(), 1, srchterm.c_str(), srchterm.size(), SQLITE_STATIC);
+	int rc = sqlite3_bind_text(m_funclistfilenamestmt.get(), 1, srchterm.C_STR(), srchterm.size(), SQLITE_STATIC);
 	if (rc != SQLITE_OK) {printf("Err: %s\n", sqlite3_errmsg(m_db)); return result;}
 	result = search_func_in_one_file(m_funclistfilenamestmt.get());
 	return result;
@@ -270,7 +270,7 @@ tVecStr sqlquery::search_autocomplete(const char* searchstr)
 	if ((searchstr == NULL)||(strlen(searchstr) < 1)||(m_db == NULL)) return result;
 	tStr srchterm = process_searchterm_autocomplete(searchstr);
 	sqlite3_reset(m_autocompstmt.get());
-	int rc = sqlite3_bind_text(m_autocompstmt.get(), 1, srchterm.c_str(), srchterm.size(), SQLITE_STATIC);
+	int rc = sqlite3_bind_text(m_autocompstmt.get(), 1, srchterm.C_STR(), srchterm.size(), SQLITE_STATIC);
 	if (rc != SQLITE_OK) {printf("Err: %s\n", sqlite3_errmsg(m_db)); return result;}
 	do
 	{
@@ -298,13 +298,13 @@ sqlqueryresultlist sqlquery::search(
 	int rc;
 	bool twoTerms = true;
 	result.result_type = sqlqueryresultlist::sqlresultERROR;
-	if ((m_db == NULL)||(searchstr.empty())||(m_basepath.empty())) return result;
+	if ((m_db == NULL)||(searchstr.STRISEMPTY())||(m_basepath.STRISEMPTY())) return result;
 	tStr sqlqry, srchterm, filterterm;
 	sqlqueryresultlist::en_resultType resultType = sqlqueryresultlist::sqlresultFULL;
 	if (exactmatch && (querytype == sqlresultFUNCSINFILE)) {searchstr.insert(0, "%");}
-	srchterm = process_searchterm(searchstr.c_str(), exactmatch);
-	if (filterstr.empty()) {filterterm = "%";}
-	else {filterterm = process_searchterm(filterstr.c_str(), false);}
+	srchterm = process_searchterm(searchstr.C_STR(), exactmatch);
+	if (filterstr.STRISEMPTY()) {filterterm = "%";}
+	else {filterterm = process_searchterm(filterstr.C_STR(), false);}
 	switch (querytype)
 	{
 		case sqlquerySYMBOL:
@@ -368,7 +368,7 @@ sqlqueryresultlist sqlquery::search(
 	if (m_searchstmt.qry.compare(sqlqry) != 0)
 	{
 		sqlite3_finalize(m_searchstmt.get());
-		rc = sqlite3_prepare_v2(m_db, sqlqry.c_str(),
+		rc = sqlite3_prepare_v2(m_db, sqlqry.C_STR(),
 					sqlqry.size(),
 					&(m_searchstmt.m_stmt), NULL);
 		m_searchstmt.qry = (rc == SQLITE_OK) ? sqlqry : "";
@@ -378,11 +378,11 @@ sqlqueryresultlist sqlquery::search(
 		rc = sqlite3_reset(m_searchstmt.get());
 	}
 	if (rc != SQLITE_OK) {result.sqlerrmsg = sqlite3_errmsg(m_db); return result;}
-	rc = sqlite3_bind_text(m_searchstmt.get(), 1, srchterm.c_str(), srchterm.size(), SQLITE_TRANSIENT);
+	rc = sqlite3_bind_text(m_searchstmt.get(), 1, srchterm.C_STR(), srchterm.size(), SQLITE_TRANSIENT);
 	if (rc != SQLITE_OK) {result.sqlerrmsg = sqlite3_errmsg(m_db); return result;}
 	if (twoTerms)
 	{
-		rc = sqlite3_bind_text(m_searchstmt.get(), 2, filterterm.c_str(), filterterm.size(), SQLITE_TRANSIENT);
+		rc = sqlite3_bind_text(m_searchstmt.get(), 2, filterterm.C_STR(), filterterm.size(), SQLITE_TRANSIENT);
 		if (rc != SQLITE_OK) {result.sqlerrmsg = sqlite3_errmsg(m_db); return result;}
 	}
 	if (resultType == sqlqueryresultlist::sqlresultFULL) result = search_full(m_searchstmt.get());
@@ -399,7 +399,7 @@ sqlqueryresultlist sqlquery::search(
 
 tStr sqlquery::process_searchterm(const char* searchterm, const bool& exactmatch)
 {
-	tStr srchterm, srchterm2;
+	std::string srchterm, srchterm2;
 	if (!exactmatch)
 	{
 		srchterm2 = add_escape_char(searchterm,        '%', ';').c_str();
@@ -411,16 +411,24 @@ tStr sqlquery::process_searchterm(const char* searchterm, const bool& exactmatch
 		replacechar( srchterm.begin(), srchterm.end(), '?', '_');
 	}
 	else srchterm = searchterm;
+#if defined(USE_QT5)||defined(USE_QT4)
+	return  QString::fromStdString(srchterm);
+#else
 	return srchterm;
+#endif
 }
 
 tStr sqlquery::process_searchterm_autocomplete(const char* searchterm)
 {
-	tStr srchterm(searchterm);
+	std::string srchterm(searchterm);
 	srchterm += "%";
 	replacechar( srchterm.begin(), srchterm.end(), '*', '%');
 	replacechar( srchterm.begin(), srchterm.end(), '?', '_');
+#if defined(USE_QT5)||defined(USE_QT4)
+	return  QString::fromStdString(srchterm);
+#else
 	return srchterm;
+#endif
 }
 
 sqlqueryresultlist sqlquery::search_declaration(const char* searchstr)
@@ -445,7 +453,7 @@ sqlqueryresultlist sqlquery::search_declaration(const char* searchstr)
 			fp            = (const char*) sqlite3_column_text(stmt, 2);
 			item.linenum  = (const char*) sqlite3_column_text(stmt, 3);
 			item.linetext = (const char*) sqlite3_column_text(stmt, 4);
-			item.filename = extract_filename(fp.c_str());
+			item.filename = extract_filename(fp.C_STR());
 			if (isAbsolutePath(fp) == false)
 			{
 				item.filepath = m_basepath;
@@ -487,7 +495,7 @@ sqlqueryresultlist sqlquery::search_full(sqlite3_stmt* stmt)
 			item.linenum  = (const char*) sqlite3_column_text(stmt, 3);
 			item.linetext = (const char*) sqlite3_column_text(stmt, 4);
 			item.fileid   =               sqlite3_column_int (stmt, 5);
-			item.filename = extract_filename(fp.c_str());
+			item.filename = extract_filename(fp.C_STR());
 			if (isAbsolutePath(fp) == false)
 			{
 				item.filepath = m_basepath;
@@ -525,10 +533,9 @@ sqlqueryresultlist sqlquery::search_func_in_one_file(sqlite3_stmt* stmt)
 			item.symname  = (const char*) sqlite3_column_text(stmt, 0);
 			fp            = (const char*) sqlite3_column_text(stmt, 1);
 			item.linenum  = (const char*) sqlite3_column_text(stmt, 2);
-			item.filename = extract_filename(fp.c_str());
-			item.intLinenum = atoi(item.linenum.c_str());
-			item.symname2 = item.symname;
-			std::transform(item.symname2.begin(), item.symname2.end(), item.symname2.begin(), ::tolower);
+			item.filename = extract_filename(fp.C_STR());
+			item.intLinenum = atoi(item.linenum.C_STR());
+			STRTOLOWER(item.symname2, item.symname);
 			if (isAbsolutePath(fp) == false)
 			{
 				item.filepath = m_basepath;
@@ -567,7 +574,7 @@ sqlqueryresultlist sqlquery::search_file_line(sqlite3_stmt* stmt)
 			item.linenum  = (const char*) sqlite3_column_text(stmt, 1);
 			item.linetext = (const char*) sqlite3_column_text(stmt, 2);
 			item.fileid   =               sqlite3_column_int (stmt, 3);
-			item.filename = extract_filename(fp.c_str());
+			item.filename = extract_filename(fp.C_STR());
 			if (isAbsolutePath(fp) == false)
 			{
 				item.filepath = m_basepath;
@@ -604,7 +611,8 @@ sqlqueryresultlist sqlquery::search_file_only(sqlite3_stmt* stmt)
 		{
 			fp            = (const char*) sqlite3_column_text(stmt, 0);
 			item.linenum  = "1";
-			item.filename = extract_filename(fp.c_str());
+			item.filename = extract_filename(fp.C_STR());
+			item.fileid   = sqlite3_column_int (stmt, 1);
 			if (isAbsolutePath(fp) == false)
 			{
 				item.filepath = m_basepath;
@@ -642,6 +650,7 @@ sqlqueryresultlist sqlquery::search_filepath_only(sqlite3_stmt* stmt)
 			fp            = (const char*) sqlite3_column_text(stmt, 0);
 			item.linenum  = "1";
 			item.filename = fp;
+			item.fileid   = sqlite3_column_int (stmt, 1);
 			if (isAbsolutePath(fp) == false)
 			{
 				item.filepath = m_basepath;
@@ -663,4 +672,214 @@ sqlqueryresultlist sqlquery::search_filepath_only(sqlite3_stmt* stmt)
 	}
 	return result;
 }
+
+bool sqlquery::search_funcgraph(tStr searchstr, bool exactmatch, tVecStr& xmlout, tVecStr& dotout, int levels, tStr* errstr)
+{
+	unsigned int i, j;
+	sqlqueryresultlist result1, result2, result;
+	tStr xmltext = "<graph>";
+	tStr dottext = "digraph graphname {\n";
+	unsigned int nodenum = 1, subrootnum;
+
+	result1 = search(searchstr, sqlresultCALLINGFUNC, exactmatch);
+	result2 = search(searchstr, sqlresultCALLEDFUNC, exactmatch);
+	if (result1.result_type == sqlqueryresultlist::sqlresultERROR)
+	{
+		if (errstr) *errstr = result1.sqlerrmsg;
+		return false;
+	}
+	else if (result2.result_type == sqlqueryresultlist::sqlresultERROR)
+	{
+		if (errstr) *errstr = result2.sqlerrmsg;
+		return false;
+	}
+
+	unique_symnames(result1);
+	unique_symnames(result2);
+
+	xmltext += string_format(tStr("<node fill=\"#e2ffff\" id=\"%d\" label=\"%s\"/>"), nodenum, searchstr.C_STR());
+	dottext += string_format(tStr("node%d [label=\"%s\" style=filled fillcolor=\"#e2ffff\" shape=\"box\" ];\n"), nodenum, searchstr.C_STR());
+
+	nodenum++;
+
+	for (i=0; i < result1.resultlist.size(); i++)
+	{
+		xmltext += string_format(tStr("<node fill=\"#ffffff\" id=\"%d\" label=\"%s\"/>"), nodenum, result1.resultlist[i].symname.C_STR());
+		xmltext += string_format(tStr("<edge target=\"1\" source=\"%d\"/>"), nodenum);
+		dottext += string_format(tStr("node%d [label=\"%s\" style=filled fillcolor=\"#ffffff\" shape=\"box\" ];\n"),
+			nodenum, result1.resultlist[i].symname.C_STR());
+		dottext += string_format(tStr("node%d -> node1;\n"), nodenum);
+		subrootnum = nodenum;
+		nodenum++;
+		if (levels == 2)
+		{
+			result = search(result1.resultlist[i].symname.C_STR(), sqlresultCALLINGFUNC, exactmatch);
+			for (j=0; j < result.resultlist.size(); j++)
+			{
+				xmltext += string_format(tStr("<node fill=\"#ffffff\" id=\"%d\" label=\"%s\"/>"),
+					nodenum, result.resultlist[j].symname.C_STR());
+				xmltext += string_format(tStr("<edge target=\"%d\" source=\"%d\"/>"), subrootnum, nodenum);
+				dottext += string_format(tStr("node%d [label=\"%s\" style=filled fillcolor=\"#ffffff\" shape=\"box\" ];\n"),
+					nodenum, result.resultlist[j].symname.C_STR());
+				dottext += string_format(tStr("node%d -> node%d;\n"), nodenum, subrootnum);
+				nodenum++;
+			}
+		}
+	}
+	for (i=0; i < result2.resultlist.size(); i++)
+	{
+		xmltext += string_format(tStr("<node fill=\"#ffffff\" id=\"%d\" label=\"%s\"/>"),
+			nodenum, result2.resultlist[i].symname.C_STR());
+		xmltext += string_format(tStr("<edge target=\"%d\" source=\"1\"/>"), nodenum);
+		dottext += string_format(tStr("node%d [label=\"%s\" style=filled fillcolor=\"#ffffff\" shape=\"box\" ];\n"),
+			nodenum, result2.resultlist[i].symname.C_STR());
+		dottext += string_format(tStr("node1 -> node%d;\n"), nodenum);
+		subrootnum = nodenum;
+		nodenum++;
+		if (levels == 2)
+		{
+			result = search(result2.resultlist[i].symname.C_STR(), sqlresultCALLEDFUNC, exactmatch);
+			for (j=0; j < result.resultlist.size(); j++)
+			{
+				xmltext += string_format(tStr("<node fill=\"#ffffff\" id=\"%d\" label=\"%s\"/>"),
+					nodenum, result.resultlist[j].symname.C_STR());
+				xmltext += string_format(tStr("<edge target=\"%d\" source=\"%d\"/>"), nodenum, subrootnum);
+				dottext += string_format(tStr("node%d [label=\"%s\" style=filled fillcolor=\"#ffffff\" shape=\"box\" ];\n"),
+					nodenum, result.resultlist[j].symname.C_STR());
+				dottext += string_format(tStr("node%d -> node%d;\n"), subrootnum, nodenum);
+				nodenum++;
+			}
+		}
+	}
+	xmltext += "</graph>";
+	dottext += "}\n";
+	xmlout.push_back(xmltext);
+	dotout.push_back(dottext);
+	return true;
+}
+
+bool sqlquery::search_classinheritgraph(tStr searchstr, bool exactmatch, tVecStr& xmlout, tVecStr& dotout, tStr* errstr)
+{
+
+	sqlqueryresultlist result_children, result_parent1, result_cousins1, result_parent2;
+	tStr xmltext = "<graph>";
+	tStr dottext = "digraph graphname {\n";
+	int nodenum = 1;
+	int parent1 = 0;
+
+	xmltext += string_format(tStr("<node fill=\"#e2ffff\" id=\"%d\" label=\"%s\"/>"), nodenum, searchstr.C_STR());
+	dottext += string_format(tStr("node%d [label=\"%s\" style=filled fillcolor=\"#e2ffff\" shape=\"box\" ];\n"), nodenum, searchstr.C_STR());
+	nodenum++;
+
+	result_children = search(searchstr, sqlresultCHILDCLASS, exactmatch);
+	if (result_children.result_type == sqlqueryresultlist::sqlresultERROR)
+	{
+		if (errstr) *errstr = result_children.sqlerrmsg;
+		return false;
+	}
+	result_parent1 = search(searchstr, sqlresultPARENTCLASS, exactmatch);
+	if (result_parent1.result_type == sqlqueryresultlist::sqlresultERROR)
+	{
+		if (errstr) *errstr = result_parent1.sqlerrmsg;
+		return false;
+	}
+	if (result_parent1.resultlist.size() > 0)
+	{
+		result_parent2 = search(result_parent1.resultlist[0].symname, sqlresultPARENTCLASS, exactmatch);
+		if (result_parent2.result_type == sqlqueryresultlist::sqlresultERROR)
+		{
+			if (errstr) *errstr = result_parent2.sqlerrmsg;
+			return false;
+		}
+		result_cousins1 = search(result_parent1.resultlist[0].symname, sqlresultCHILDCLASS, exactmatch);
+		if (result_cousins1.result_type == sqlqueryresultlist::sqlresultERROR)
+		{
+			if (errstr) *errstr = result_cousins1.sqlerrmsg;
+			return false;
+		}
+	}
+	unique_symnames(result_children);
+	unique_symnames(result_parent1);
+	unique_symnames(result_parent2);
+	unique_symnames(result_cousins1);
+	remove_symname(result_cousins1, searchstr); // I am not my own cousin
+	for (unsigned int i=0; i < result_children.resultlist.size(); i++)
+	{
+		xmltext += string_format(tStr("<node fill=\"#ffffff\" id=\"%d\" label=\"%s\"/>"),
+			nodenum, result_children.resultlist[i].symname.C_STR());
+		xmltext += string_format(tStr("<edge target=\"1\" source=\"%d\"/>"), nodenum);
+		dottext += string_format(tStr("node%d [label=\"%s\" style=filled fillcolor=\"#ffffff\" shape=\"box\" ];\n"),
+			nodenum, result_children.resultlist[i].symname.C_STR());
+		dottext += string_format(tStr("node%d -> node1 [arrowhead=\"empty\"];\n"), nodenum);
+		nodenum++;
+	}
+	for (unsigned int i=0; i < result_parent1.resultlist.size(); i++)
+	{
+		xmltext += string_format(tStr("<node fill=\"#ffffff\" id=\"%d\" label=\"%s\"/>"),
+			nodenum, result_parent1.resultlist[i].symname.C_STR());
+		xmltext += string_format(tStr("<edge target=\"%d\" source=\"1\"/>"), nodenum);
+		dottext += string_format(tStr("node%d [label=\"%s\" style=filled fillcolor=\"#ffffff\" shape=\"box\" ];\n"),
+			nodenum, result_parent1.resultlist[i].symname.C_STR());
+		dottext += string_format(tStr("node1 -> node%d [arrowhead=\"empty\"];\n"), nodenum);
+		if (i == 0) parent1 = nodenum;
+		nodenum++;
+	}
+	for (unsigned int i=0; i < result_parent2.resultlist.size(); i++)
+	{
+		xmltext += string_format(tStr("<node fill=\"#ffffff\" id=\"%d\" label=\"%s\"/>"),
+			nodenum, result_parent2.resultlist[i].symname.C_STR());
+		xmltext += string_format(tStr("<edge target=\"%d\" source=\"%d\"/>"), nodenum, parent1);
+		dottext += string_format(tStr("node%d [label=\"%s\" style=filled fillcolor=\"#ffffff\" shape=\"box\" ];\n"),
+			nodenum, result_parent2.resultlist[i].symname.C_STR());
+		dottext += string_format(tStr("node%d -> node%d [arrowhead=\"empty\"];\n"), parent1, nodenum);
+		nodenum++;
+	}
+	for (unsigned int i=0; i < result_cousins1.resultlist.size(); i++)
+	{
+		xmltext += string_format(tStr("<node fill=\"#ffffff\" id=\"%d\" label=\"%s\"/>"),
+			nodenum, result_cousins1.resultlist[i].symname.C_STR());
+		xmltext += string_format(tStr("<edge target=\"%d\" source=\"%d\"/>"), parent1, nodenum);
+		dottext += string_format(tStr("node%d [label=\"%s\" style=filled fillcolor=\"#ffffff\" shape=\"box\" ];\n"),
+			nodenum, result_cousins1.resultlist[i].symname.C_STR());
+		dottext += string_format(tStr("node%d -> node%d [arrowhead=\"empty\"];\n"), nodenum, parent1);
+		nodenum++;
+	}
+	xmltext += "</graph>";
+	dottext += "}\n";
+	xmlout.push_back(xmltext);
+	dotout.push_back(dottext);
+	return true;
+}
+
+// make the list of symnames unique, no elements repeated
+void sqlquery::unique_symnames(sqlqueryresultlist& res)
+{
+	tSetStr setstr;
+	sqlqueryresultlist out;
+	sqlqueryresult item;
+	for(unsigned int i=0; i < res.resultlist.size(); i++)
+	{
+		setstr.insert(res.resultlist[i].symname);
+	}
+	for (auto it = setstr.begin(); it != setstr.end(); it++)
+	{
+		item.symname = *it;
+		out.resultlist.push_back(item);
+	}
+	res = out;
+}
+
+// remove a symname from the list
+void sqlquery::remove_symname(sqlqueryresultlist& res, tStr name)
+{
+	for (auto it = res.resultlist.begin(); it != res.resultlist.end(); it++)
+	{
+		if (it->symname.compare(name) == 0)
+		{
+			res.resultlist.erase(it);
+			break;
+		}
+	}
+}
+
 

@@ -18,14 +18,16 @@
 
 # Ignore the following directories
 build/
+buildnogui/
 build-*/
-build32/
-build64/
+buildqt4/
+buildqt5/
 output/
 Output/
 bin/
 html/
 CMakeFiles/
+.vscode/
 nbproject/
 .vscode/
 

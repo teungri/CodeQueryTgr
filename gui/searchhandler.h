@@ -19,7 +19,7 @@
 #include <QtGui>
 #endif
 
-#include "sqlqueryadv.h"
+#include "sqlquery.h"
 
 class mainwindow;
 
@@ -62,7 +62,7 @@ QCheckBox *m_checkBoxFilter;
 QComboBox *m_comboBoxFilter;
 QCompleter *m_completer;
 QFutureWatcher<QStringList> m_autocompFutureWatcher;
-QFutureWatcher<QString> m_declarFutureWatcher;
+QFutureWatcher<QStringList> m_declarFutureWatcher;
 QFutureWatcher<sqlqueryresultlist> m_listFuncFutureWatcher;
 static bool m_grepExactMatch;
 static QRegExp* m_grepRegExp;
@@ -84,10 +84,10 @@ void goBackInSearchMemory(void);
 void restoreSearchMemoryItem(void);
 void retranslateUi(void);
 static QStringList search_autocomplete_qt(QString searchtxt);
-static QString search_declaration_qt(QString searchtxt);
+static QStringList search_declaration_qt(QString searchtxt);
 static sqlqueryresultlist search_funclist_qt_filename(QString filename);
 static sqlqueryresultlist search_funclist_qt_fileid(int fileid);
-static sqlqueryresultlist doGrep(const QString &fp);
+static sqlqueryresultlist doGrep(const QPair<QString, int> &fp);
 static void collateGrep(sqlqueryresultlist &result,
 			const sqlqueryresultlist &intermediate);
 
@@ -121,12 +121,12 @@ void updateStatus(const QString & message, int timeout = 0);
 void DBreset();
 void sendDBtimestamp(QDateTime dt);
 void getResultCurrentListItemSymbolName();
-void searchDeclarationResultsReady(QString resdeclar);
+void searchDeclarationResultsReady(QStringList resdeclar);
 void searchListFuncResultsReady(sqlqueryresultlist* res);
 
 private:
 mainwindow *mw;
-static sqlqueryadv* sq;
+static sqlquery* sq;
 QString m_graphdesc;
 int m_typeOfGraph; // 1 = Function Call, 2 = Class Inheritance
 QStringListModel m_srchStrLstModel;

@@ -12,9 +12,7 @@ The CodeQuery database file can be viewed and queried using the *codequery* GUI 
 [![Build Status](https://api.travis-ci.org/ruben2020/codequery.svg)](https://travis-ci.org/ruben2020/codequery)        [![Coverity Status](https://scan.coverity.com/projects/10066/badge.svg)](https://scan.coverity.com/projects/ruben2020-codequery)
       
 
-## Latest version = 0.21.0
-
-**NOTE: Version 0.21.0 has fixes for a major performance bug in the GUI and in the ctags file parser.**
+## Latest version = 0.23.0
 
 Windows and Linux binaries available here for download: [CodeQuery@sourceforge downloads](https://sourceforge.net/projects/codequery/files/)
 
@@ -86,16 +84,22 @@ Here's a function call graph based on the search term of "updateFilePathLabel". 
 ![Visualization screenshot](doc/screenshot2.png)
 
 
-## Are other editors like vim or emacs supported?
+## Are other editors like vim or emacs or Visual Studio Code supported?
 
-Yes! There is a vim plugin for CodeQuery called [vim-codequery](https://github.com/devjoe/vim-codequery) by [devjoe](https://github.com/devjoe). We welcome contributors to develop plugins for other editors too.
+Yes!
+
+There is a vim plugin for CodeQuery called [vim-codequery](https://github.com/devjoe/vim-codequery) by [devjoe](https://github.com/devjoe).
+
+There is a Visual Studio Code extension for CodeQuery called [codequery4vscode](https://github.com/ruben2020/codequery4vscode) by [ruben2020](https://github.com/ruben2020). The Visual Studio Code Extension Marketplace page for this extension is [ruben2020.codequery4vscode](https://marketplace.visualstudio.com/items?itemName=ruben2020.codequery4vscode).
+
+We welcome contributors to develop plugins for other editors too.
 
 
 ## What does it cost? How is it licensed?
 
 It's freeware and free open source software.
 
-This software is licensed under the [Mozilla Public License, version 2.0 (MPL-2.0)](https://www.mozilla.org/en-US/MPL/2.0/). See [LICENSE.md](LICENSE.md) or [LICENSE.txt](windows-install/LICENSE.txt). This applies to both the distributed Source Code Form and the distributed Executable Form of the software.
+This software is licensed under the [Mozilla Public License, version 2.0 (MPL-2.0)](https://www.mozilla.org/en-US/MPL/2.0/). See [LICENSE.md](LICENSE.md) or [LICENSE.txt](windows-install/wincommon/LICENSE.txt). This applies to both the distributed Source Code Form and the distributed Executable Form of the software.
 
 To understand the MPL-2.0 license, please read the [MPL-2.0 FAQ by mozilla.org](https://www.mozilla.org/en-US/MPL/2.0/FAQ/).
 
@@ -136,7 +140,7 @@ Version 15.8a of [cscope](http://cscope.sourceforge.net/) or higher, works best 
 
 ## How do I use it?
 
-On Windows: [HOWTO-WINDOWS](windows-install/HOWTO-WINDOWS.txt). This file is included in the EXE setup package.
+On Windows: [HOWTO-WINDOWS](windows-install/wincommon/HOWTO-WINDOWS.txt). This file is included in the EXE setup package.
 
 On Linux and Mac: [HOWTO-LINUX](doc/HOWTO-LINUX.md)
 
@@ -192,6 +196,7 @@ Website: [CodeQuery website](https://github.com/ruben2020/codequery)
 [ilovezfs](https://github.com/ilovezfs)    
 [JCount](https://github.com/JCount)    
 [brianonn](https://github.com/brianonn)    
+[teungri](https://github.com/teungri)    
 (More welcomed)
 
 

@@ -3,12 +3,13 @@
 
 This is a tool to index, then query or search C, C++, Java, Python, Ruby, Go and Javascript source code.
 
-It builds upon the databases of [cscope](http://cscope.sourceforge.net/) and [Exuberant ctags](http://ctags.sourceforge.net/).
+It builds upon the databases of [cscope](http://cscope.sourceforge.net/) and [Exuberant ctags](http://ctags.sourceforge.net/). It can also work with [Universal ctags](https://github.com/universal-ctags/ctags/), which is a drop-in replacement for Exuberant ctags.
 
 The databases of *cscope* and *ctags* would be processed by the *cqmakedb* tool to generate the CodeQuery database file.
 
 The CodeQuery database file can be viewed and queried using the *codequery* GUI tool.
 
+[![Build Status](https://api.travis-ci.org/ruben2020/codequery.svg)](https://travis-ci.org/ruben2020/codequery)        [![Coverity Status](https://scan.coverity.com/projects/10066/badge.svg)](https://scan.coverity.com/projects/ruben2020-codequery)
       
 
 ## Latest version
@@ -92,9 +93,11 @@ Yes! There is a vim plugin for CodeQuery called [vim-codequery](https://github.c
 
 It's freeware and free open source software.
 
-This software is licensed under the [Mozilla Public License, version 2.0](https://www.mozilla.org/en-US/MPL/2.0/). See [LICENSE.md](LICENSE.md) or [LICENSE.txt](windows-install/LICENSE.txt).
+This software is licensed under the [Mozilla Public License, version 2.0 (MPL-2.0)](https://www.mozilla.org/en-US/MPL/2.0/). See [LICENSE.md](LICENSE.md) or [LICENSE.txt](windows-install/wincommon/LICENSE.txt). This applies to both the distributed Source Code Form and the distributed Executable Form of the software.
 
-Files under the `querylib` directory are licensed under the [MIT license](http://opensource.org/licenses/MIT). See [QueryLib README](querylib/README.txt). This is a library to query CodeQuery database files. This library is MIT-licensed, so that it may be used to create plugins for editors, IDEs and other software without license restrictions. It's only dependency is on sqlite3.
+To understand the MPL-2.0 license, please read the [MPL-2.0 FAQ by mozilla.org](https://www.mozilla.org/en-US/MPL/2.0/FAQ/).
+
+Files under the `querylib` directory are licensed under the [MIT license](http://opensource.org/licenses/MIT). See [QueryLib README](querylib/README.txt). This is a library to query CodeQuery database files. This library is MIT-licensed, so that it may be used to create plugins for editors, IDEs and other software without restrictions. It's only dependency is on sqlite3.
 
 
 ## Can I use it in a commercial environment without purchasing, for an unlimited time?
@@ -131,7 +134,7 @@ Version 15.8a of [cscope](http://cscope.sourceforge.net/) or higher, works best 
 
 ## How do I use it?
 
-On Windows: [HOWTO-WINDOWS](windows-install/HOWTO-WINDOWS.txt). This file is included in the EXE setup package.
+On Windows: [HOWTO-WINDOWS](windows-install/wincommon/HOWTO-WINDOWS.txt). This file is included in the EXE setup package.
 
 On Linux and Mac: [HOWTO-LINUX](doc/HOWTO-LINUX.md)
 
@@ -187,6 +190,7 @@ Website: [CodeQuery website](https://github.com/ruben2020/codequery)
 [ilovezfs](https://github.com/ilovezfs)    
 [JCount](https://github.com/JCount)    
 [brianonn](https://github.com/brianonn)    
+[teungri](https://github.com/teungri)    
 (More welcomed)
 
 
@@ -195,6 +199,7 @@ Website: [CodeQuery website](https://github.com/ruben2020/codequery)
 We thank the people behind the following projects:    
 [cscope](http://cscope.sourceforge.net/) - our database is derived from this   
 [Exuberant ctags](http://ctags.sourceforge.net/)- our database is derived from this   
+[Universal ctags](https://github.com/universal-ctags/ctags/) - drop-in replacement for Exuberant ctags    
 [pycscope](https://github.com/portante/pycscope) - our database (for Python) is derived from this    
 [starscope](https://github.com/eapache/starscope) - our database (for Ruby, Go and Javascript) is derived from this    
 [sqlite3](http://www.sqlite.org/) - our database is using this format    

@@ -66,11 +66,16 @@ bool isAbsolutePath(tStr fp)
 bool strrevcmp(tStr str, tStr cmpstr)
 {
 	bool retval = (1 == 1);
-	long n = str.length();
+	size_t n = str.length();
 	if (n != cmpstr.length()) {retval = (1 == 0);}
-	else for (long i = (n - 1); i >= 0; i--)
+	else if (n > 0)
+	for (size_t i = (n - 1); ((i >= 0)&&(i < n)); i--)
 	{
-		if (str[i] != cmpstr[i])
+		if ((i < 0)||(i >= n))
+		{
+			continue;
+		}
+		if (str.CHAR_AT(i) != cmpstr.CHAR_AT(i))
 		{
 			retval = (1 == 0);
 			break;
@@ -119,21 +124,6 @@ std::vector<std::string> splitstr(const char* inpstr, const char delim)
 	return vecstr;
 }
 
-// replace char o with char r for every part of the string
-// from iterator i1 to iterator i2, excluding i2
-long replacechar(std::string::iterator i1, std::string::iterator i2, const char o, const char r)
-{
-	long count = 0;
-	for(std::string::iterator i = i1; i != i2; ++i)
-	{
-		if (*i == o)
-		{
-			*i = r;
-			count++;
-		}
-	}
-	return count;
-}
 
 // remove EOL char
 const char* chomp(char* str)
@@ -251,10 +241,7 @@ tempbuf::tempbuf(long n)
 	}
 tempbuf::~tempbuf()
 	{
-		if (m_buffer != NULL)
-		{ 
-			delete[] m_buffer;
-		}
+		delete[] m_buffer;
 	}
 char* tempbuf::operator() () {return m_buffer;}
 char* tempbuf::get(void) {return m_buffer;}
@@ -305,4 +292,5 @@ idxcounter& idxcounter::operator --() {--m_ctr;sprintf(m_buf, "%lu", m_ctr); ret
 long unsigned int idxcounter::getInt(void) const {return m_ctr;}
 const char* idxcounter::getStr(void) const {return m_buf;}
 int idxcounter::getStrSize(void) const {return strlen(m_buf);}
+
 

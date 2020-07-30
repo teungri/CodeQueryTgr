@@ -84,6 +84,7 @@ void init(void);
 void updateTextEdit(void);
 void updateFilePathLabel(void);
 void handleFileCannotBeOpenedCase(void);
+QString checkFontFamily(QString fontname);
 
 public slots:
 void fileToBeOpened(QString filename, QString linenum, int fileid);
@@ -102,9 +103,9 @@ void recvDBtimestamp(QDateTime dt);
 void fontSelectionTemporary(const QString &fonttxt);
 void themeSelectionTemporary(const QString &themetxt);
 void tabWidthSelectionTemporary(const QString &width);
-void annotate(QString annotstr);
+void annotate(QStringList annotstrLst);
 void recvFuncList(sqlqueryresultlist* reslist);
-void funcItemSelected(QListWidgetItem * curitem, QListWidgetItem * previtem);
+void funcItemSelected(QListWidgetItem * curitem);
 void FuncListSort_indexChanged(const int& idx);
 
 signals:
@@ -139,6 +140,7 @@ void setLexer(int lang = -1);
 void replaceLexer(int sclang, int lang);
 void clearTextEdit(void);
 void braceMatchCheck(void);
+void updateFuncList(void);
 
 };
 

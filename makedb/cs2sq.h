@@ -59,9 +59,9 @@ csdbparser::enResult get_csdbpError(void) {return m_csdbpLastErr;}
 bool isCSDBFileOpen(void)  {return m_csdbp.isFileOpen();}
 
 private:
+csdbparser::enResult m_csdbpLastErr;
 char* m_buf;
 csdbparser m_csdbp;
-csdbparser::enResult m_csdbpLastErr;
 stStrID m_calling_func;
 stStrID m_calling_macro;
 sqlite3_stmt* m_filesstmt;

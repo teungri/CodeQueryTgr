@@ -39,8 +39,8 @@ int execstmt(sqlite3_stmt* pstmt, const char* v1, const char* v2,
              const char* v3, const char* v4, const char* v5);
 
 protected:
-bool m_debug;
 sqlite3 *m_db;
+bool m_debug;
 
 };
 

@@ -42,6 +42,7 @@ void setup_searchhandler(void);
 void retranslateUi(void);
 void writeSettings();
 void readSettings();
+QComboBox *getComboBoxSearch();
 
 public slots:
 void AboutQtTriggered(bool checked);

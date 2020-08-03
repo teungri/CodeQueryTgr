@@ -264,7 +264,7 @@ void fileviewer::fileToBeOpened(QString filename, QString linenum, int fileid)
 #ifdef _WIN32
 	filename.replace("/", "\\");
 #endif
-	if (!(QFile::exists(filename)))
+    if (!(QFile::exists(filename)))
 	{
 		m_labelFilePath->setText(tr("File not found"));
 		handleFileCannotBeOpenedCase();
@@ -733,8 +733,33 @@ void fileviewer::highlightLine(unsigned int num)
 		num = num - 1; // not sure why it's one off
 		m_textEditSource->markerAdd(num, m_markerhandle);
 		m_textEditSource->markerAdd(num, m_markerhandle2);
-	}
-	m_textEditSource->setFirstVisibleLine(num);
+    }
+
+	// highlight search items
+	QString searchText = mw->getComboBoxSearch()->currentText();
+	m_textEditSource->clearSelections();
+    m_textEditSource->setMultipleSelection(true);
+
+    QString fileText = QString::fromStdString(m_textEditSource->getText(m_textEditSource->length()).toStdString());
+    int nrOccurrances = fileText.count(searchText, Qt::CaseInsensitive );
+    printf("nrOccurrances=%d\n", nrOccurrances);
+    int start = 0, end = 0;
+    bool setSel = true;
+    for (int ix = 0; ix< nrOccurrances; ix++)
+    {
+        start = fileText.indexOf(searchText, end);
+        end = start + searchText.length();
+        if (setSel)
+        {
+            m_textEditSource->setSelection(start, end);
+            setSel = false;
+        }
+        else m_textEditSource->addSelection(start, end);
+    }
+
+    int firstVisibleLine = num-(m_textEditSource->linesOnScreen()/2);
+    firstVisibleLine = firstVisibleLine >=0 ? firstVisibleLine : 0;
+    m_textEditSource->setFirstVisibleLine(firstVisibleLine);
 	m_currentline = num;
 }
 

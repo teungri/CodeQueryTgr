@@ -30,6 +30,7 @@ CMakeFiles/
 .vscode/
 nbproject/
 .vscode/
+.history/
 
 # Ignore cscope and ctags files, and our db files
 cscope.files

@@ -337,5 +337,9 @@ void mainwindow::readSettings()
 	}
 
 }
+QComboBox *mainwindow::getComboBoxSearch()
+{
+    return ui->comboBoxSearch;
+}
 
 

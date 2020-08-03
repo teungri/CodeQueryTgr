@@ -15,8 +15,10 @@ option(BUILD_QT5 "Qt5 option"    ON)
 option(NO_GUI    "No GUI option" OFF)
 
 MESSAGE("-- NO_GUI = " ${NO_GUI})
-SET( SQLITE_LIBRARIES "c:\\Projects\\SqLite" )
-SET( BUILD_QT5 TRUE ) 
+SET( SQLITE_LIBRARIES "c:/Projects/SqLite" )
+SET( SQLITE_INCLUDE_DIR "${SQLITE_LIBRARIES}/src" )
+SET( SQLITE_LIBRARY_RELEASE "${SQLITE_LIBRARIES}/sqlite3.dll" )
+SET( BUILD_QT5 TRUE )
 SET( MSVC FALSE )
 
 if (NO_GUI)

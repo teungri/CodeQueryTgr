@@ -737,8 +737,9 @@ void fileviewer::highlightLine(unsigned int num)
 
 	// highlight search items
 	QString searchText = mw->getComboBoxSearch()->currentText();
+	m_textEditSource->setSelBack(true, 0xFFFF00);
 	m_textEditSource->clearSelections();
-    m_textEditSource->setMultipleSelection(true);
+	m_textEditSource->setMultipleSelection(true);
 
     QString fileText = QString::fromStdString(m_textEditSource->getText(m_textEditSource->length()).toStdString());
     int nrOccurrances = fileText.count(searchText, Qt::CaseInsensitive );

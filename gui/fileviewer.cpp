@@ -736,12 +736,13 @@ void fileviewer::highlightLine(unsigned int num)
     }
 
 	// highlight search items
-	QString searchText = mw->getComboBoxSearch()->currentText();
+    QString searchText = mw->getComboBoxSearch()->currentText().toLower();
 	m_textEditSource->setSelBack(true, 0xFFFF00);
 	m_textEditSource->clearSelections();
 	m_textEditSource->setMultipleSelection(true);
 
     QString fileText = QString::fromStdString(m_textEditSource->getText(m_textEditSource->length()).toStdString());
+    fileText = fileText.toLower();
     int nrOccurrances = fileText.count(searchText, Qt::CaseInsensitive );
     printf("nrOccurrances=%d\n", nrOccurrances);
     int start = 0, end = 0;

@@ -13,6 +13,7 @@ project(CodeQuery)
 
 option(BUILD_QT5 "Qt5 option"    ON)
 option(NO_GUI    "No GUI option" OFF)
+option(GHAWIN    "GitHub Actions on Windows" OFF)
 
 MESSAGE("-- NO_GUI = " ${NO_GUI})
 SET( SQLITE_LIBRARIES "c:/Projects/SqLite" )
@@ -26,6 +27,14 @@ else (NO_GUI)
 MESSAGE("-- BUILD_QT5 = " ${BUILD_QT5})
 endif(NO_GUI)
 
+if (GHAWIN)
+MESSAGE("-- GHAWIN = " ${GHAWIN})
+else (GHAWIN)
+endif(GHAWIN)
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmakefind/")
+
+
 # C++11 now always required
 SET( CMAKE_CXX_STANDARD 11 )
 SET( CMAKE_CXX_STANDARD_REQUIRED ON )
@@ -38,7 +47,6 @@ SET( CMAKE_CXX_FLAGS_DEBUG  "-O2 -Wno-unused-result" )
 SET( CMAKE_CXX_FLAGS_RELEASE  "-O2 -Wno-unused-result" )
 ENDIF(MSVC)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmakefind/")
 
 set( EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR} )
 
@@ -85,7 +93,7 @@ endif (NO_GUI)
   endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 
 set( CPACK_GENERATOR "DEB;TGZ")
-set( CPACK_PACKAGE_VERSION  "0.23.0" )
+set( CPACK_PACKAGE_VERSION  "0.26.0" )
 set( CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-Linux-${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}" ) 
 set( CPACK_PACKAGE_DESCRIPTION_SUMMARY "Code understanding and searching tool")
 set( CPACK_PACKAGE_DESCRIPTION "Code understanding and searching tool")

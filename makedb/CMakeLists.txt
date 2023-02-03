@@ -13,11 +13,16 @@ project(CodeQueryDBMaker)
 # Compiler flags
 add_definitions( -Wall -g )
 
+if(GHAWIN)
+find_package(unofficial-sqlite3 CONFIG REQUIRED)
+set( SQLITE_LIBRARIES "unofficial::sqlite3::sqlite3" )
+else(GHAWIN)
 find_package(Sqlite REQUIRED)
+include_directories( "${SQLITE_INCLUDE_DIR}" )
+endif(GHAWIN)
 
 include_directories( "." )
 include_directories( "../querylib" )
-include_directories( "${SQLITE_INCLUDE_DIR}" )
 
 set( CQMAKEDB_SRCS
      sqlbase.cpp

@@ -1,9 +1,26 @@
 Changelog
 =========
 
+Version 0.26.0 - Dec 19, 2022
+-----------------------------
+Bugfix: File path label with too large contents extending window beyond viewport GUI bug fixed          
+Enhancement: Default external editor configuration for MacOS added
+
+Version 0.25.0 - Apr 17, 2022
+-----------------------------
+Enhancement: Workaround for pycscope trailer start offset bug running on Python 3.8         
+Enhancement: Updated Scintilla to 3.21.1        
+Enhancement: Removed warnings for Qt 5.15         
+Enhancement: Windows installer now includes Qt 5.15.2 and sqlite 3.38.2 binaries       
+Enhancement: Moved from Travis CI to Github Actions (for Linux, MacOS and Windows builds)        
+
+Version 0.24.0 - Jan 17, 2021
+-----------------------------
+Enhancement: Improved German translation for CodeQuery GUI, contributed by stweise       
+
 Version 0.23.0 - Apr 15, 2020
 -----------------------------
-The CMake build directory is now moveable and renameable, which is useful for Debian source package creation
+The CMake build directory is now moveable and renameable, which is useful for Debian source package creation      
 
 Version 0.22.0 - Apr 12, 2020
 -----------------------------

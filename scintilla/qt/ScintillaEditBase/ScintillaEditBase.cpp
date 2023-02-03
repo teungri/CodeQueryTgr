@@ -40,10 +40,18 @@
 #endif
 #endif // QT_VERSION >= 5.0.0
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
+#define ISWHEELEVENTHORIZONTAL(x)     (x->angleDelta().y() == 0)
+#define WHEELEVENTYDELTA(x)           (x->angleDelta().y())
+#else
+#define ISWHEELEVENTHORIZONTAL(x)     (x->orientation() == Qt::Horizontal)
+#define WHEELEVENTYDELTA(x)           (x->delta())
+#endif
+
 using namespace Scintilla;
 
 ScintillaEditBase::ScintillaEditBase(QWidget *parent)
-: QAbstractScrollArea(parent), sqt(0), preeditPos(-1), wheelDelta(0)
+: QAbstractScrollArea(parent), sqt(nullptr), preeditPos(-1), wheelDelta(0)
 {
 	sqt = new ScintillaQt(this);
 
@@ -150,7 +158,7 @@ void ScintillaEditBase::paintEvent(QPaintEvent *event)
 
 void ScintillaEditBase::wheelEvent(QWheelEvent *event)
 {
-	if (event->orientation() == Qt::Horizontal) {
+	if (ISWHEELEVENTHORIZONTAL(event)) {
 		if (horizontalScrollBarPolicy() == Qt::ScrollBarAlwaysOff)
 			event->ignore();
 		else
@@ -159,7 +167,7 @@ void ScintillaEditBase::wheelEvent(QWheelEvent *event)
 		if (QApplication::keyboardModifiers() & Qt::ControlModifier) {
 			// Zoom! We play with the font sizes in the styles.
 			// Number of steps/line is ignored, we just care if sizing up or down
-			if (event->delta() > 0) {
+			if (WHEELEVENTYDELTA(event) > 0) {
 				sqt->KeyCommand(SCI_ZOOMIN);
 			} else {
 				sqt->KeyCommand(SCI_ZOOMOUT);

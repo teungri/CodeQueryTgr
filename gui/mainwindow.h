@@ -13,7 +13,8 @@
 #ifndef MAINWINDOW_H_CQ
 #define MAINWINDOW_H_CQ
 
-#ifdef USE_QT5
+#include <QtGlobal>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <QtWidgets>
 #else
 #include <QtGui>
@@ -51,6 +52,10 @@ void ExitTriggered(bool checked);
 void LanguageTriggered(bool checked);
 void prepareToExit();
 
+signals:
+void windowResized();
+void windowRepainted();
+
 private:
 QApplication *m_app;
 fileviewer* m_fileviewer;
@@ -60,6 +65,10 @@ QString m_currentLanguage;
 QTranslator m_translator;
 
 void init(void);
+
+protected:
+virtual void resizeEvent(QResizeEvent* event);
+virtual void paintEvent(QPaintEvent *event);
 
 };
 

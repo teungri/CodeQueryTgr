@@ -1,0 +1,2 @@
+# CodeQueryTgr
+CodeQuery somewhat adapted

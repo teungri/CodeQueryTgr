@@ -16,7 +16,7 @@ option(NO_GUI    "No GUI option" OFF)
 option(GHAWIN    "GitHub Actions on Windows" OFF)
 
 MESSAGE("-- NO_GUI = " ${NO_GUI})
-SET( SQLITE_LIBRARIES "c:/Projects/SqLite" )
+SET( SQLITE_LIBRARIES "F:/Projects/SqLite" )
 SET( SQLITE_INCLUDE_DIR "${SQLITE_LIBRARIES}/src" )
 SET( SQLITE_LIBRARY_RELEASE "${SQLITE_LIBRARIES}/sqlite3.dll" )
 SET( BUILD_QT5 TRUE )

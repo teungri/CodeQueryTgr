@@ -762,6 +762,7 @@ void fileviewer::highlightLine(unsigned int num)
 	// highlight search items
     QString searchText = mw->getComboBoxSearch()->currentText().toLower();
 	m_textEditSource->setSelBack(true, 0xFFFF00);
+	m_textEditSource->setSelFore(true, 0x000000);
 	m_textEditSource->clearSelections();
 	m_textEditSource->setMultipleSelection(true);
 

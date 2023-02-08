@@ -648,6 +648,7 @@ void fileviewer::OptionsExtEditor_Triggered(bool checked)
 	exted += tr("For example:");
 #ifdef _WIN32
 	exted += "\n\"C:\\Program Files\\Notepad++\\notepad++.exe\" -n%n %f";
+    exted += "\n\"C:\\Program Files\\VisualStudioCode\\code.exe\" --goto %f:%n";
 #else
 	exted += "\ngedit %f +%n";
 #endif

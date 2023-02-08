@@ -1,7 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <ui version="4.0">
  <class>aboutDialog</class>
  <widget class="QDialog" name="aboutDialog">
@@ -42,7 +39,7 @@
           <string/>
          </property>
          <property name="pixmap">
-          <pixmap resource="../codequery.qrc">:/mainwindow/images/logo.png</pixmap>
+          <pixmap>:/mainwindow/images/logo.png</pixmap>
          </property>
          <property name="openExternalLinks">
           <bool>false</bool>
@@ -126,8 +123,6 @@
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../codequery.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

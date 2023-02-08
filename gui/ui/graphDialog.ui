@@ -1,7 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <ui version="4.0">
  <class>DialogGraph</class>
  <widget class="QDialog" name="DialogGraph">
@@ -41,7 +38,7 @@
         <x>0</x>
         <y>0</y>
         <width>979</width>
-        <height>591</height>
+        <height>611</height>
        </rect>
       </property>
       <property name="layoutDirection">
@@ -79,7 +76,7 @@
         <string/>
        </property>
        <property name="icon">
-        <iconset resource="../codequery.qrc">
+        <iconset>
          <normaloff>:/mainwindow/images/Zoom_Out.png</normaloff>:/mainwindow/images/Zoom_Out.png</iconset>
        </property>
       </widget>
@@ -102,7 +99,7 @@
         <string/>
        </property>
        <property name="icon">
-        <iconset resource="../codequery.qrc">
+        <iconset>
          <normaloff>:/mainwindow/images/Zoom_In.png</normaloff>:/mainwindow/images/Zoom_In.png</iconset>
        </property>
       </widget>
@@ -212,8 +209,6 @@
   <tabstop>pushButtonSave</tabstop>
   <tabstop>pushButtonClose</tabstop>
  </tabstops>
- <resources>
-  <include location="../codequery.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

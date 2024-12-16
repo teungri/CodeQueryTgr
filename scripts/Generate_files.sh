@@ -1,6 +1,7 @@
 
 set -x
 basedir=$1
+drive=$(echo $1 | cut -d"/" -f1)
 subdir=$2
 srcdir=$basedir/$subdir
 webdir=$srcdir/Vaf.Pemx.Web
@@ -28,7 +29,7 @@ find $srcdir \( -path $srcdir/.git -o \
                 \( -name "*.js" -o -name "*.html" -o -name "*.css" \) \
                 -print > $webFiles
 
-cat $webFiles | sed -e "s/\/f\//F:\\//g" |  sed -e "s/\//\\\/g" > $tempFiles
+cat $webFiles | sed -e "s/\/d\//D:\\//g" |  sed -e "s/\//\\\/g" > $tempFiles
 mv $tempFiles $webFiles
 
 echo "Searching C# files in $srcdir ..." >&2
@@ -43,7 +44,7 @@ find $srcdir \( -path $srcdir/.git -o \
                 \( -name "*.cs" -o -name "*.cs" -o -name "*.R" \) \
                 -print | grep -v "\/obj\/" | grep -v "\/bin\/" | grep -v "\/.vshistory\/" | grep -v "\/.history\/"  > $cscopeFilesForCtags
 
-cat $cscopeFilesForCtags | sed -e "s/\/f\//F:\\//g" | \
+cat $cscopeFilesForCtags | sed -e "s/\/d\//D:\\//g" | \
                    sed -e "s/\//\\\/g" > $tempFiles
 mv $tempFiles $cscopeFilesForCtags
 

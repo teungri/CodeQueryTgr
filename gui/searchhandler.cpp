@@ -595,7 +595,8 @@ sqlqueryresultlist searchhandler::perform_grep(QString searchtxt, sqlqueryresult
 	QObject::connect(&futureWatcher, SIGNAL(progressRangeChanged(int,int)), &dialog, SLOT(setRange(int,int)));
 	QObject::connect(&futureWatcher, SIGNAL(progressValueChanged(int)), &dialog, SLOT(setValue(int)));
 	m_grepExactMatch = exactmatch;
-	(*m_grepRegExp) = QRegExp(searchtxt.C_STR(), Qt::CaseInsensitive);
+    QString tempstr = searchtxt.replace(" ", ".*");
+	(*m_grepRegExp) = QRegExp(tempstr.C_STR(), Qt::CaseInsensitive);
 	m_grepRegExp->setPatternSyntax(QRegExp::RegExp2);
 	futureWatcher.setFuture(QtConcurrent::mappedReduced(strvec, doGrep,
 				collateGrep, QtConcurrent::SequentialReduce));

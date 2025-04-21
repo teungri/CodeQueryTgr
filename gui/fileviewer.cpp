@@ -769,20 +769,27 @@ void fileviewer::highlightLine(unsigned int num)
 
     QString fileText = QString::fromStdString(m_textEditSource->getText(m_textEditSource->length()).toStdString());
     fileText = fileText.toLower();
-    int nrOccurrances = fileText.count(searchText, Qt::CaseInsensitive );
-    printf("nrOccurrances=%d\n", nrOccurrances);
-    int start = 0, end = 0;
+    QStringList lstSrcTxt = searchText.split(" ");
+
     bool setSel = true;
-    for (int ix = 0; ix< nrOccurrances; ix++)
+    for (int ix=0; ix < lstSrcTxt.size(); ix++)
     {
-        start = fileText.indexOf(searchText, end);
-        end = start + searchText.length();
-        if (setSel)
+        QString elSearchText = lstSrcTxt.at(ix);
+        elSearchText = elSearchText.toLower();
+        int nrOccurrances = fileText.count(elSearchText, Qt::CaseInsensitive );
+        printf("nrOccurrances=%d\n", nrOccurrances);
+        int start = 0, end = 0;
+        for (int ix = 0; ix< nrOccurrances; ix++)
         {
-            m_textEditSource->setSelection(start, end);
-            setSel = false;
+            start = fileText.indexOf(elSearchText, end);
+            end = start + elSearchText.length();
+            if (setSel)
+            {
+                m_textEditSource->setSelection(start, end);
+                setSel = false;
+            }
+            else m_textEditSource->addSelection(start, end);
         }
-        else m_textEditSource->addSelection(start, end);
     }
 
     int firstVisibleLine = num-(m_textEditSource->linesOnScreen()/2);

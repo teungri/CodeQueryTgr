@@ -746,6 +746,9 @@ void fileviewer::tabWidthSelectionTemporary(const QString &width)
 	m_fontwidthtemp = width.toInt();
 }
 
+void setSelections(ScintillaEdit* textEdit, QMap<int,int> startEnd, QMap<int,QString> startSrchItems,
+                   int nrSearchItems);
+
 void fileviewer::highlightLine(unsigned int num)
 {
 	m_textEditSource->markerDeleteAll(-1);
@@ -771,8 +774,12 @@ void fileviewer::highlightLine(unsigned int num)
     fileText = fileText.toLower();
     QStringList lstSrcTxt = searchText.split(" ");
 
-    bool setSel = true;
-    for (int ix=0; ix < lstSrcTxt.size(); ix++)
+    QMap<int,int> startEnd;
+    QMap<int,QString> startSrcItem;
+
+    // bool setSel = true;
+    int nrSearchItems = lstSrcTxt.size();
+    for (int ix=0; ix < nrSearchItems; ix++)
     {
         QString elSearchText = lstSrcTxt.at(ix);
         elSearchText = elSearchText.toLower();
@@ -783,19 +790,80 @@ void fileviewer::highlightLine(unsigned int num)
         {
             start = fileText.indexOf(elSearchText, end);
             end = start + elSearchText.length();
+            startEnd[start] = end;
+            startSrcItem[start] = elSearchText;
+            /*
             if (setSel)
             {
                 m_textEditSource->setSelection(start, end);
                 setSel = false;
             }
             else m_textEditSource->addSelection(start, end);
+            */
         }
     }
+    setSelections(m_textEditSource, startEnd, startSrcItem, nrSearchItems);
 
     int firstVisibleLine = num-(m_textEditSource->linesOnScreen()/2);
     firstVisibleLine = firstVisibleLine >=0 ? firstVisibleLine : 0;
     m_textEditSource->setFirstVisibleLine(firstVisibleLine);
 	m_currentline = num;
+}
+
+bool isValidSearchItem(QMap<int, int>startEnd, QMap<int,QString> startSearchItem, int ix, int nrCharsBwnItems)
+{
+    int nrItems = startEnd.size();
+    QList<int> starts = startEnd.keys();
+    if (ix <= 0 || ix >= nrItems) return true;
+
+    int prevStart = starts.at(ix-1);
+    int prevEnd = startEnd[prevStart];
+    QString prevSrcItem = startSearchItem[prevStart];
+    int thisStart = starts.at(ix);
+    QString thisSrcItem = startSearchItem[thisStart];
+//    if ((thisStart - prevEnd) < nrCharsBwnItems && prevSrcItem != thisSrcItem)
+    if ((thisStart - prevEnd) < nrCharsBwnItems)
+    {
+        return true;
+    }
+
+    int thisEnd = startEnd[thisStart];
+    int nextStart = starts.at(ix+1);
+    QString nextSrcItem = startSearchItem[nextStart];
+
+//    if ((nextStart-thisEnd) < nrCharsBwnItems && thisSrcItem != nextSrcItem)
+    if ((nextStart-thisEnd) < nrCharsBwnItems)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+void setSelections(ScintillaEdit* textEdit, QMap<int,int> startEnd, QMap<int,QString> startSearchItem,
+                   int nrSearchItems)
+{
+    bool setSel = true;
+    QList<int> keys = startEnd.keys();
+    int nrCharsBwnItems = 96/nrSearchItems;
+    for (int i = 0; i < keys.size(); i++)
+    {
+        int start = keys.at(i);
+        int end = startEnd.value(start);
+        bool validStartEnd = false;
+        if (nrSearchItems == 1) validStartEnd = true;
+        if (isValidSearchItem(startEnd, startSearchItem, i, nrCharsBwnItems)) validStartEnd = true;
+
+        if (validStartEnd)
+        {
+            if (setSel)
+            {
+                textEdit->setSelection(start, end);
+                setSel = false;
+            }
+            else textEdit->addSelection(start, end);
+        }
+    }
 }
 
 void fileviewer::setLexer(int lang)

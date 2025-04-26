@@ -746,6 +746,7 @@ void fileviewer::tabWidthSelectionTemporary(const QString &width)
 	m_fontwidthtemp = width.toInt();
 }
 
+/**
 // Recursive function to generate permutations
 void generatePermutations(QStringList &list, int index, QStringList &results) {
     if (index == list.size() - 1) {
@@ -759,6 +760,7 @@ void generatePermutations(QStringList &list, int index, QStringList &results) {
         list.swap(index, i); // Backtrack
     }
 }
+**/
 
 void fileviewer::highlightLine(unsigned int num)
 {
@@ -784,14 +786,17 @@ void fileviewer::highlightLine(unsigned int num)
     QString fileText = QString::fromStdString(m_textEditSource->getText(m_textEditSource->length()).toStdString());
     fileText = fileText.toLower();
 
+    /*
     QStringList lstSrcTxt = searchText.split(" ");
     // Store all permutations
     QStringList permutations; // {aa bb cc}, {aa cc bb}, {bb aa cc} etc
     generatePermutations(lstSrcTxt, 0, permutations);
+    */
 
-    for (int pix=0; pix < permutations.size(); pix++)
-    {
-        QString permSearchText = permutations.at(pix);
+//    for (int pix=0; pix < permutations.size(); pix++)
+//    {
+//        QString permSearchText = permutations.at(pix);
+        QString permSearchText = searchText;
         QString searchTextRegExp = permSearchText.replace(" ", ".*");
         QRegularExpression regex(searchTextRegExp);
         QRegularExpressionMatchIterator it = regex.globalMatch(fileText);
@@ -812,7 +817,7 @@ void fileviewer::highlightLine(unsigned int num)
 
             qDebug() << "Pattern:" << searchTextRegExp << "Start:" << start << "End:" << end;
         }
-    }
+//    }
 
     int firstVisibleLine = num-(m_textEditSource->linesOnScreen()/2);
     firstVisibleLine = firstVisibleLine >=0 ? firstVisibleLine : 0;

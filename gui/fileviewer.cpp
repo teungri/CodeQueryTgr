@@ -648,6 +648,7 @@ void fileviewer::OptionsExtEditor_Triggered(bool checked)
 	exted += tr("For example:");
 #ifdef _WIN32
 	exted += "\n\"C:\\Program Files\\Notepad++\\notepad++.exe\" -n%n %f";
+    exted += "\n\"C:\\Program Files\\VisualStudioCode\\code.exe\" --goto %f:%n";
 #else
 	exted += "\ngedit %f +%n";
 #endif
@@ -745,6 +746,22 @@ void fileviewer::tabWidthSelectionTemporary(const QString &width)
 	m_fontwidthtemp = width.toInt();
 }
 
+/**
+// Recursive function to generate permutations
+void generatePermutations(QStringList &list, int index, QStringList &results) {
+    if (index == list.size() - 1) {
+        results.append(list.join(" ")); // Store the current permutation
+        return;
+    }
+
+    for (int i = index; i < list.size(); ++i) {
+        list.swap(index, i); // Swap items
+        generatePermutations(list, index + 1, results); // Recurse
+        list.swap(index, i); // Backtrack
+    }
+}
+**/
+
 void fileviewer::highlightLine(unsigned int num)
 {
 	m_textEditSource->markerDeleteAll(-1);
@@ -762,26 +779,45 @@ void fileviewer::highlightLine(unsigned int num)
 	// highlight search items
     QString searchText = mw->getComboBoxSearch()->currentText().toLower();
 	m_textEditSource->setSelBack(true, 0xFFFF00);
+	m_textEditSource->setSelFore(true, 0x000000);
 	m_textEditSource->clearSelections();
 	m_textEditSource->setMultipleSelection(true);
 
     QString fileText = QString::fromStdString(m_textEditSource->getText(m_textEditSource->length()).toStdString());
     fileText = fileText.toLower();
-    int nrOccurrances = fileText.count(searchText, Qt::CaseInsensitive );
-    printf("nrOccurrances=%d\n", nrOccurrances);
-    int start = 0, end = 0;
-    bool setSel = true;
-    for (int ix = 0; ix< nrOccurrances; ix++)
-    {
-        start = fileText.indexOf(searchText, end);
-        end = start + searchText.length();
-        if (setSel)
+
+    /*
+    QStringList lstSrcTxt = searchText.split(" ");
+    // Store all permutations
+    QStringList permutations; // {aa bb cc}, {aa cc bb}, {bb aa cc} etc
+    generatePermutations(lstSrcTxt, 0, permutations);
+    */
+
+//    for (int pix=0; pix < permutations.size(); pix++)
+//    {
+//        QString permSearchText = permutations.at(pix);
+        QString permSearchText = searchText;
+        QString searchTextRegExp = permSearchText.replace(" ", ".*");
+        QRegularExpression regex(searchTextRegExp);
+        QRegularExpressionMatchIterator it = regex.globalMatch(fileText);
+
+        bool setSel = true;
+        while (it.hasNext())
         {
-            m_textEditSource->setSelection(start, end);
-            setSel = false;
+            QRegularExpressionMatch match = it.next();
+            int start = match.capturedStart();
+            int end = match.capturedEnd();
+
+            if (setSel)
+            {
+                m_textEditSource->setSelection(start, end);
+                setSel = false;
+            }
+            else m_textEditSource->addSelection(start, end);
+
+            qDebug() << "Pattern:" << searchTextRegExp << "Start:" << start << "End:" << end;
         }
-        else m_textEditSource->addSelection(start, end);
-    }
+//    }
 
     int firstVisibleLine = num-(m_textEditSource->linesOnScreen()/2);
     firstVisibleLine = firstVisibleLine >=0 ? firstVisibleLine : 0;

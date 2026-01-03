@@ -7,24 +7,23 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 
-cmake_minimum_required(VERSION 3.2.2)
+cmake_minimum_required(VERSION 3.16.0)
 project(CodeQuery)
 
-
-option(BUILD_QT5 "Qt5 option"    ON)
+option(BUILD_QT6 "Qt6 option"    ON)
+option(BUILD_QT5 "Qt5 option"    OFF)
 option(NO_GUI    "No GUI option" OFF)
 option(GHAWIN    "GitHub Actions on Windows" OFF)
 
-MESSAGE("-- NO_GUI = " ${NO_GUI})
-SET( SQLITE_LIBRARIES "D:/Tools/SqLite" )
-SET( SQLITE_INCLUDE_DIR "${SQLITE_LIBRARIES}/src" )
-SET( SQLITE_LIBRARY_RELEASE "${SQLITE_LIBRARIES}/sqlite3.dll" )
-SET( BUILD_QT5 TRUE )
-SET( MSVC FALSE )
-
 if (NO_GUI)
+MESSAGE("-- NO_GUI = " ${NO_GUI})
 else (NO_GUI)
-MESSAGE("-- BUILD_QT5 = " ${BUILD_QT5})
+
+if (BUILD_QT5)
+message("-- BUILD_QT5 = " ${BUILD_QT5})
+else (BUILD_QT5)
+message("-- BUILD_QT6 = " ${BUILD_QT6})
+endif(BUILD_QT5)
 endif(NO_GUI)
 
 if (GHAWIN)
@@ -35,16 +34,20 @@ endif(GHAWIN)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmakefind/")
 
 
-# C++11 now always required
-SET( CMAKE_CXX_STANDARD 11 )
+# C++17 now always required
+SET( CMAKE_CXX_STANDARD 17 )
 SET( CMAKE_CXX_STANDARD_REQUIRED ON )
+
+#set(CMAKE_BUILD_TYPE Debug)
+#SET(CMAKE_C_FLAGS_DEBUG "-g -ggdb -O0 -Wno-unused-result -Wno-return-type")
+#SET(CMAKE_CXX_FLAGS_DEBUG "-g -ggdb -O0 -Wno-unused-result -Wno-return-type")
 
 IF(MSVC)
 ADD_DEFINITIONS(/D _CRT_SECURE_NO_WARNINGS)
 ELSE(MSVC)
-SET( CMAKE_CXX_FLAGS  "-O2 -Wno-unused-result" )
-SET( CMAKE_CXX_FLAGS_DEBUG  "-O2 -Wno-unused-result" )
-SET( CMAKE_CXX_FLAGS_RELEASE  "-O2 -Wno-unused-result" )
+SET( CMAKE_CXX_FLAGS  "-O2 -Wno-unused-result -Wno-return-type ${CMAKE_CXX_FLAGS}")
+SET( CMAKE_CXX_FLAGS_DEBUG  "-g -ggdb -O0 -Wno-unused-result -Wno-return-type ${CMAKE_CXX_FLAGS_DEBUG}" )
+SET( CMAKE_CXX_FLAGS_RELEASE  "-O2 -Wno-unused-result -Wno-return-type ${CMAKE_CXX_FLAGS_RELEASE}" )
 ENDIF(MSVC)
 
 
@@ -57,55 +60,8 @@ add_subdirectory( "cli" )
 
 if (NO_GUI)
 else (NO_GUI)
+add_subdirectory( "lexilla" )
 add_subdirectory( "scintilla/qt/ScintillaEdit" )
 add_subdirectory( "showgraph" )
 add_subdirectory( "gui" )
 endif (NO_GUI)
-
-# Increasing minimum version numbers of dependencies to support Ubuntu 16.04 LTS (xenial)
-
-if (UNIX)
-
-if (NO_GUI)
-
-set( CPACK_PACKAGE_NAME "codequery-nogui" )
-set( CPACK_DEBIAN_PACKAGE_DEPENDS "libsqlite3-0 (>= 3.11.0) " )
-
-else (NO_GUI)
-if (BUILD_QT5)
-
-set( CPACK_PACKAGE_NAME "codequery-qt5" )
-set( CPACK_DEBIAN_PACKAGE_DEPENDS "qtbase5-dev (>= 5.5.1) , libsqlite3-0 (>= 3.11.0) " )
-
-else (BUILD_QT5)
-
-set( CPACK_PACKAGE_NAME "codequery-qt4" )
-set( CPACK_DEBIAN_PACKAGE_DEPENDS "libqtcore4 (>= 4.8.7), libqtgui4 (>= 4.8.7) , libqt4-xml (>= 4.8.7) , libsqlite3-0 (>= 3.11.0) " )
-
-endif (BUILD_QT5)
-endif (NO_GUI)
-
-
-  if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-    set( CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64" )
-  else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-    set( CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386" )
-  endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-
-set( CPACK_GENERATOR "DEB;TGZ")
-set( CPACK_PACKAGE_VERSION  "0.26.0" )
-set( CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-Linux-${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}" ) 
-set( CPACK_PACKAGE_DESCRIPTION_SUMMARY "Code understanding and searching tool")
-set( CPACK_PACKAGE_DESCRIPTION "Code understanding and searching tool")
-set( CPACK_PACKAGE_VENDOR "ruben2020")
-set( CPACK_DEBIAN_PACKAGE_RECOMMENDS "cscope , exuberant-ctags" )
-set( CPACK_DEBIAN_PACKAGE_SECTION "devel" )
-set( CPACK_DEBIAN_PACKAGE_MAINTAINER "ruben2020 ruben2020-git@users.sourceforge.net")
-set( CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://ruben2020.github.io/codequery/")
-
-include(CPack)
-
-else (UNIX)
-set( CPACK_PACKAGE_NAME "codequery-qt5" )
-endif (UNIX)
-

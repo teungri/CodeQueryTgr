@@ -17,20 +17,26 @@
 #include "mainwindow.h"
 
 
-int main(int argc, char *argv[])
-{
-	QApplication app(argc, argv);
-	QMainWindow *wndw = new QMainWindow;
-	mainwindow mw(wndw, &app);
+// int main(int argc, char *argv[])
+// {
+// 	QApplication app(argc, argv);
+// 	QMainWindow *wndw = new QMainWindow;
 
-	mw.show();
+// /*
+// #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+// #if defined(__unix__) || defined(__linux__)
+// 	app.setAttribute(Qt::AA_DontUseNativeDialogs, true);
+// #endif
+// #endif
+// */
 
-#ifdef _WIN32
-	ShowWindow( (HWND) mw.winId(), SW_HIDE);
-	SetWindowLongPtr( (HWND) mw.winId(), GWL_EXSTYLE, 
-			GetWindowLongPtr( (HWND) mw.winId(), GWL_EXSTYLE) | WS_EX_APPWINDOW);
-	ShowWindow( (HWND) mw.winId(), SW_SHOW);
-#endif
+// 	mainwindow mw(wndw, &app);
 
-	return app.exec();
-}
+// 	mw.show();
+
+// #ifdef _WIN32
+
+// #endif
+
+// 	return app.exec();
+// }

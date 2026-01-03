@@ -1,4 +1,4 @@
-// ScintillaDocument.h
+// @file ScintillaDocument.h
 // Wrapper for Scintilla document object so it can be manipulated independently.
 // Copyright (c) 2011 Archaeopteryx Software, Inc. d/b/a Wingware
 
@@ -23,11 +23,16 @@ class WatcherHelper;
 #endif
 #endif
 
+// Forward declaration
+namespace Scintilla {
+    class IDocumentEditable;
+}
+
 class EXPORT_IMPORT_API ScintillaDocument : public QObject
 {
     Q_OBJECT
 
-    void *pdoc;
+    Scintilla::IDocumentEditable *pdoc;
     WatcherHelper *docWatcher;
 
 public:
@@ -45,7 +50,7 @@ public:
     void delete_undo_history();
     bool set_undo_collection(bool collect_undo);
     bool is_collecting_undo();
-    void begin_undo_action();
+    void begin_undo_action(bool coalesceWithPrior = false);
     void end_undo_action();
     void set_save_point();
     bool is_save_point();
@@ -59,7 +64,7 @@ public:
     int line_end_position(int pos);
     int length();
     int lines_total();
-    void start_styling(int position, char flags);
+    void start_styling(int position);
     bool set_style_for(int length, char style);
     int get_end_styled();
     void ensure_styled_to(int position);
@@ -80,12 +85,11 @@ signals:
     void modify_attempt();
     void save_point(bool atSavePoint);
     void modified(int position, int modification_type, const QByteArray &text, int length,
-                  int linesAdded, int line, int foldLevelNow, int foldLevelPrev);
+		  int linesAdded, int line, int foldLevelNow, int foldLevelPrev);
     void style_needed(int pos);
-    void lexer_changed();
     void error_occurred(int status);
 
     friend class ::WatcherHelper;
 };
 
-#endif // SCINTILLADOCUMENT_H
+#endif /* SCINTILLADOCUMENT_H */

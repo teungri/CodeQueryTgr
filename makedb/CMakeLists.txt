@@ -7,11 +7,10 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 
-cmake_minimum_required(VERSION 3.2.2)
+cmake_minimum_required(VERSION 3.16.0)
 project(CodeQueryDBMaker)
 
-# Compiler flags
-add_definitions( -Wall -g )
+#add_definitions( -Wall )
 
 if(GHAWIN)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)

@@ -1,5 +1,5 @@
 {
-    "version": "0.26.0",
+    "version": "1.0.1",
     "state": "stable",
     "scope": "minor feature",
     "changes": "File path label GUI bug fixed",

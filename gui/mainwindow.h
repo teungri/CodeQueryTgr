@@ -14,12 +14,7 @@
 #define MAINWINDOW_H_CQ
 
 #include <QtGlobal>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <QtWidgets>
-#else
-#include <QtGui>
-#endif
-
 
  namespace Ui {
      class MainWindow;
@@ -43,7 +38,7 @@ void setup_searchhandler(void);
 void retranslateUi(void);
 void writeSettings();
 void readSettings();
-QComboBox *getComboBoxSearch();
+QComboBox* getComboBoxSearch();
 
 public slots:
 void AboutQtTriggered(bool checked);
@@ -65,10 +60,13 @@ QString m_currentLanguage;
 QTranslator m_translator;
 
 void init(void);
+QString checkForFileToOpen(void);
+void printHelpAndExit(QString str);
 
 protected:
 virtual void resizeEvent(QResizeEvent* event);
-virtual void paintEvent(QPaintEvent *event);
+virtual void paintEvent(QPaintEvent* event);
+virtual void closeEvent(QCloseEvent* event);
 
 };
 

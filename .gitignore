@@ -22,6 +22,7 @@ buildnogui/
 build-*/
 buildqt4/
 buildqt5/
+buildqt6/
 output/
 Output/
 bin/
@@ -33,8 +34,8 @@ nbproject/
 .history/
 
 # Ignore cscope and ctags files, and our db files
-cscope.files
-cscope.out
+cscope*.files
+cscope*.out
 tags
 *.db
 
@@ -47,3 +48,4 @@ tags
 
 
 
+/.qtcreator/CMakeLists.txt.user

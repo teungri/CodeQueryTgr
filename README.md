@@ -12,9 +12,11 @@ The CodeQuery database file can be viewed and queried using the *codequery* GUI 
 [![Build Status](https://github.com/ruben2020/codequery/actions/workflows/cmake.yml/badge.svg?branch=master)](https://github.com/ruben2020/codequery/actions)        [![Coverity Status](https://scan.coverity.com/projects/10066/badge.svg)](https://scan.coverity.com/projects/ruben2020-codequery)
       
 
-## Latest version = 0.26.0
+## Latest version = 1.0.1
 
-Windows and Linux binaries available here for download: [CodeQuery@sourceforge downloads](https://sourceforge.net/projects/codequery/files/)
+Windows binaries available here for download: [CodeQuery@sourceforge downloads](https://sourceforge.net/projects/codequery/files/)
+
+On Debian and Ubuntu Linux, the software can be installed using `apt-get install codequery`.
 
 To build on Linux, please read the [INSTALL-LINUX](doc/INSTALL-LINUX.md) file.
 
@@ -105,6 +107,7 @@ To understand the MPL-2.0 license, please read the [MPL-2.0 FAQ by mozilla.org](
 
 Files under the `querylib` directory are licensed under the [MIT license](http://opensource.org/licenses/MIT). See [QueryLib README](querylib/README.txt). This is a library to query CodeQuery database files. This library is MIT-licensed, so that it may be used to create plugins for editors, IDEs and other software without restrictions. It's only dependency is on sqlite3.
 
+Third party software attribution can be found in [THIRDPARTY.md](THIRDPARTY.md).
 
 ## Can I use it in a commercial environment without purchasing, for an unlimited time?
 
@@ -113,7 +116,7 @@ Yes. However, donations are welcomed.
 
 ## Which platforms are supported?
 
-It has been tested on Windows 7 64-bit, Windows XP 32-bit, Mac OS X, Ubuntu and Fedora Linux 64-bit and, Ubuntu and Fedora Linux 32-bit.
+It has been tested on Windows 10 64-bit, Mac OS X, Ubuntu and Arch Linux 64-bit.
 
 Contributions are welcomed to attempt ports to other operating systems.
 
@@ -129,7 +132,7 @@ Contributions are welcomed to update or provide new translations.
 
 On Windows, EXE setup packages will be provided here: [CodeQuery@sourceforge downloads](https://sourceforge.net/projects/codequery/files/). The EXE setup package shall also contain cscope.exe, ctags.exe and the required DLLs. So, everything you need is in one package. However, [pycscope](https://github.com/portante/pycscope) (optional - only for Python) and [starscope](https://github.com/eapache/starscope) (optional - only for Ruby, Go and Javascript) are not bundled together with this setup package and need to be installed separately.
 
-On Linux, tar.gz, RPM and Debian package installations will be provided here: [CodeQuery@sourceforge downloads](https://sourceforge.net/projects/codequery/files/).
+On Debian and Ubuntu Linux, the software can be installed using `apt-get install codequery`.
 
 On Mac, the software can be installed through [Brew](http://brew.sh/) using `brew install codequery`.
 

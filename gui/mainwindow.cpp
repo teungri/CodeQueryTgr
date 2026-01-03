@@ -104,8 +104,8 @@ void mainwindow::init(void)
 	connect(ui->actionFileViewSettings, SIGNAL(triggered(bool)),
 			m_fileviewer, SLOT(fileViewSettings_Triggered(bool)));
 	m_app->setQuitOnLastWindowClosed(false);
-	connect(m_app, SIGNAL(lastWindowClosed()),
-			this, SLOT(prepareToExit()));
+//	connect(m_app, SIGNAL(lastWindowClosed()),
+//			this, SLOT(prepareToExit()));
 	readSettings();
 }
 
@@ -124,6 +124,11 @@ void mainwindow::setup_fileviewer(void)
 	m_fileviewer->m_comboBoxFuncListSort = ui->comboBoxFuncListSort;
 	m_fileviewer->m_checkBoxSymbolOnly = ui->checkBoxSymbolOnly;
 	m_fileviewer->init();
+}
+
+QComboBox* mainwindow::getComboBoxSearch()
+{
+    return ui->comboBoxSearch;
 }
 
 void mainwindow::setup_listhandler(void)
@@ -195,7 +200,7 @@ void mainwindow::retranslateUi(void)
 
 void mainwindow::ExitTriggered(bool checked)
 {
-	prepareToExit();
+	close();
 }
 
 void mainwindow::AboutQtTriggered(bool checked)
@@ -273,12 +278,16 @@ void mainwindow::readSettings()
 
 	int sizee = settings.beginReadArray("OpenDBHistory");
 	QStringList dbhist;
+	QString ftoopen = checkForFileToOpen();
+	if (ftoopen.isEmpty() == false) dbhist << ftoopen;
 	for (int i=0; i < sizee; i++)
 	{
 		settings.setArrayIndex(i);
 		dbhist << settings.value("db").toString();
 	}
 	settings.endArray();
+	dbhist.removeDuplicates();
+	if (dbhist.count() > 7) dbhist.removeLast();
 	if (dbhist.isEmpty() == false) ui->comboBoxDB->addItems(dbhist);
 
 	int sizef = settings.beginReadArray("FilterHistory");
@@ -303,7 +312,8 @@ void mainwindow::readSettings()
 	ui->checkBoxSymbolOnly->setChecked(settings.value("SymbolOnly", false).toBool());
 	ui->checkBoxFilter->setChecked(settings.value("FilterCheckBox", false).toBool());
 	ui->comboBoxQueryType->setCurrentIndex(settings.value("QueryType", 0).toInt());
-	ui->comboBoxDB->setCurrentIndex(settings.value("LastOpenDB", ui->comboBoxDB->currentIndex()).toInt());
+	if (ftoopen.isEmpty() == false) ui->comboBoxDB->setCurrentIndex(0);
+	else ui->comboBoxDB->setCurrentIndex(settings.value("LastOpenDB", ui->comboBoxDB->currentIndex()).toInt());
 	m_currentLanguage = settings.value("Language", QString("English")).toString();
 	retranslateUi();
 	m_fileviewer->m_externalEditorPath =
@@ -311,14 +321,9 @@ void mainwindow::readSettings()
 	//m_fileviewer->m_textEditSourceFont.setPixelSize(settings.value("FileViewerFontSize", 12).toInt());
 	m_fileviewer->m_fontsize = settings.value("FileViewerFontSize", 0).toInt();
 	m_fileviewer->m_textEditSource->setZoom(m_fileviewer->m_fontsize);
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 2, 0))
 	m_fileviewer->m_textEditSourceFont.setFamily(m_fileviewer->checkFontFamily(
 		settings.value("FileViewerFontType", 
 			QFontDatabase::systemFont(QFontDatabase::FixedFont).family()).toString()));
-#else
-	m_fileviewer->m_textEditSourceFont.setFamily(m_fileviewer->checkFontFamily(
-		settings.value("FileViewerFontType", "Consolas").toString()));
-#endif
 	m_fileviewer->m_textEditSource->setFont(m_fileviewer->m_textEditSourceFont);
 	m_fileviewer->m_textEditSource->setTabWidth(settings.value("FileViewerTabWidth", 4).toInt());
 	m_fileviewer->m_theme = (settings.value("FileViewerTheme", "Eclipse Default").toString());
@@ -341,9 +346,46 @@ void mainwindow::readSettings()
 	}
 
 }
-QComboBox *mainwindow::getComboBoxSearch()
+
+QString mainwindow::checkForFileToOpen(void)
 {
-    return ui->comboBoxSearch;
+	QStringList arg = m_app->arguments();
+	QString fn;
+	if (arg.size() <= 1) return fn;
+	if (arg.size() >= 3)
+	{
+		printHelpAndExit("ERROR: More than 1 argument is not recognized.");
+		return fn;
+	}
+	if ((arg[1] == "--help")||
+		(arg[1] == "-h")||
+		(arg[1] == "-?")||
+		(arg[1] == "/?"))
+	{
+		printHelpAndExit("");
+		return fn;
+	}
+	QFileInfo qfi(arg[1]);
+	if ((qfi.exists() == false) || (qfi.isFile() == false))
+	{
+		tempbuf buf(3000);
+		sprintf(buf.get(), "ERROR: File \"%s\" does not exist!", arg[1].toStdString().c_str());
+		printHelpAndExit(buf.get());
+		return fn;
+	}
+	fn = qfi.canonicalFilePath();
+	return fn;
+}
+
+void mainwindow::printHelpAndExit(QString str)
+{
+		printf("codequery [path_to_codequery_database_file_to_open]\n");
+		printf("The argument is optional.\n");
+		if (str.isEmpty() == false) printf("%s\n", str.toStdString().c_str());
+		printf("\n");
+		m_listhandler->prepareToExit();
+		m_app->quit();
+		exit(str.isEmpty() ? 0 : 1);
 }
 
 
@@ -357,5 +399,10 @@ void mainwindow::paintEvent(QPaintEvent* event)
 {
 	QMainWindow::paintEvent(event);
 	emit windowRepainted();
+}
+
+void mainwindow::closeEvent(QCloseEvent* event)
+{
+	prepareToExit();
 }
 

@@ -517,22 +517,16 @@ void searchhandler::perform_search(QString searchtxt,
 		m_listFuncFutureWatcher.waitForFinished();
 	}
 	sqlquery::en_queryType querytype = qrytyp;
-    if (querytype == sqlquery::sqlresultDEFAULT)
-    {
-        querytype = (sqlquery::en_queryType)m_comboBoxQueryType->itemData(m_comboBoxQueryType->currentIndex())
-                                            .toInt();
-    }
-
+	if (querytype == sqlquery::sqlresultDEFAULT) querytype = 
+		(sqlquery::en_queryType)m_comboBoxQueryType->itemData(m_comboBoxQueryType->currentIndex()).toInt();
 	if ((filtertxt.isEmpty()) && (m_checkBoxFilter->isChecked()))
 	{
 		filtertxt = m_comboBoxFilter->lineEdit()->text().trimmed();
 		if (updSearchMemory) updateFilterHistory(filtertxt);
-    }
-
+	}
 	if (querytype == sqlquery::sqlresultGREP)
 	{
-        if (filtertxt.isEmpty()) filtertxt = "*";
-
+		if (filtertxt.isEmpty()) filtertxt = "*";
 		sqlresultlist = sq->search(filtertxt.C_STR(),
 				sqlquery::sqlresultFILEPATH, false);
 	}
@@ -541,8 +535,7 @@ void searchhandler::perform_search(QString searchtxt,
 		sqlresultlist = sq->search(searchtxt.C_STR(),
 				querytype, exactmatch,
 				filtertxt.C_STR());
-    }
-
+	}
 	QApplication::restoreOverrideCursor();
 	if (sqlresultlist.result_type == sqlqueryresultlist::sqlresultERROR)
 	{
@@ -553,10 +546,8 @@ void searchhandler::perform_search(QString searchtxt,
 	else
 	{
 		m_pushButtonGraph->setEnabled((querytype == sqlquery::sqlresultFUNC_MACRO)||
-                                      (querytype == sqlquery::sqlresultCLASS_STRUCT));
-
-        updateSearchHistory(searchtxt);
-
+			(querytype == sqlquery::sqlresultCLASS_STRUCT));
+		updateSearchHistory(searchtxt);
 		if (updSearchMemory) addToSearchMemory(searchtxt, filtertxt);
 		if (querytype == sqlquery::sqlresultGREP)
 		{
@@ -592,9 +583,7 @@ sqlqueryresultlist searchhandler::perform_grep(QString searchtxt, sqlqueryresult
 	QObject::connect(&futureWatcher, SIGNAL(progressRangeChanged(int,int)), &dialog, SLOT(setRange(int,int)));
 	QObject::connect(&futureWatcher, SIGNAL(progressValueChanged(int)), &dialog, SLOT(setValue(int)));
 	m_grepExactMatch = exactmatch;
-    QString tempstr = searchtxt.replace(" ", ".*");
-	(*m_grepRegExp) = QRegExp(tempstr.C_STR(), Qt::CaseInsensitive);
-	m_grepRegExp->setPatternSyntax(QRegExp::RegExp2);
+	(*m_grepRegExp) = QRegularExpression(searchtxt.C_STR(), QRegularExpression::CaseInsensitiveOption);
 	futureWatcher.setFuture(QtConcurrent::mappedReduced(strvec, doGrep,
 				collateGrep, QtConcurrent::SequentialReduce));
 	dialog.exec();

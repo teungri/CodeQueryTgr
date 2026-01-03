@@ -18,6 +18,7 @@
 * Add cmake/bin to path
 * Configure CMakeList.txt Project by open with cmake-gui
 * Copy cq Edit doc/generate_build.sh as you like
+* start generate_build.sh from git bash (right mouse)
 
 ### Start cmake-gui
 =================== 

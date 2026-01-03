@@ -126,6 +126,11 @@ void mainwindow::setup_fileviewer(void)
 	m_fileviewer->init();
 }
 
+QComboBox* mainwindow::getComboBoxSearch()
+{
+    return ui->comboBoxSearch;
+}
+
 void mainwindow::setup_listhandler(void)
 {
 	m_listhandler->m_treeWidgetSearchResults = ui->treeWidgetSearchResults;
